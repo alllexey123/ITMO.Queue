@@ -12,4 +12,11 @@ class UserService (private val userRepository: UserRepository) {
         return userRepository.findByIdOrNull(userId)
     }
 
+    fun findAll(): List<User> {
+        return userRepository.findAll()
+    }
+
+    fun save(user: User): User {
+        return userRepository.save(user)
+    }
 }

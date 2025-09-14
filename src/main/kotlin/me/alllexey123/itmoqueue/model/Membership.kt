@@ -21,6 +21,7 @@ class Membership(
     // if type == Pending, then this is the time of the request
     val since: OffsetDateTime,
 
+    @Enumerated(EnumType.STRING)
     val type: Type,
 ) {
 

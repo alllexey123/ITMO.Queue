@@ -11,4 +11,12 @@ class GroupService(private val groupRepository: GroupRepository) {
     fun findById(groupId: Long): Group? {
         return groupRepository.findByIdOrNull(groupId)
     }
+
+    fun findAll(): List<Group> {
+        return groupRepository.findAll()
+    }
+
+    fun save(group: Group): Group {
+        return groupRepository.save(group)
+    }
 }

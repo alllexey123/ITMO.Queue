@@ -16,5 +16,5 @@ class Group (
     var members: MutableSet<Membership>,
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
-    var works: MutableSet<LaboratoryWork>,
+    var works: MutableSet<LabWork>,
 )

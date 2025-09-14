@@ -3,7 +3,7 @@ package me.alllexey123.itmoqueue.model
 import jakarta.persistence.*
 
 @Entity
-class LaboratoryWork(
+class LabWork(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
