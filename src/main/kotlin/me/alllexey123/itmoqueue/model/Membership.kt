@@ -4,6 +4,7 @@ import jakarta.persistence.*
 import java.time.OffsetDateTime
 
 @Entity
+@Table(name = "memberships")
 class Membership(
 
     @Id
