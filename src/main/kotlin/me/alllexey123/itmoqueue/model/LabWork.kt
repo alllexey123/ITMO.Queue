@@ -16,7 +16,6 @@ class LabWork(
     @JoinColumn(name = "group_id")
     var group: Group,
 
-    @ManyToMany(fetch = FetchType.LAZY)
-    var teachers: MutableList<Teacher>
-
+    @OneToMany(mappedBy = "labWork", cascade = [(CascadeType.ALL)], orphanRemoval = true)
+    var queues: MutableList<Queue> = mutableListOf(),
 )

@@ -1,20 +1,24 @@
 package me.alllexey123.itmoqueue.model
 
 import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
 @Entity
-@Table(name = "teachers")
-class Teacher(
+@Table(name = "queue_entries")
+class QueueEntry (
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null,
+    val id: Long? = null,
 
-    var name: String,
+    @ManyToOne(fetch = FetchType.LAZY)
+    val user: User,
 
-    var itmoId: Int? = null,
+    @ManyToOne(fetch = FetchType.LAZY)
+    val queue: Queue
 )
