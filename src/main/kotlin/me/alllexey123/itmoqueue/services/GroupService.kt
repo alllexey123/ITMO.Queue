@@ -19,4 +19,20 @@ class GroupService(private val groupRepository: GroupRepository) {
     fun save(group: Group): Group {
         return groupRepository.save(group)
     }
+    
+    fun findByChatId(chatId: Long): Group? {
+        return groupRepository.findByChatId(chatId)
+    }
+    
+    fun getOrCreateByChatId(chatId: Long): Group {
+        val group = findByChatId(chatId)
+        if (group == null) {
+            return save(Group(
+                name = null,
+                chatId = chatId,
+                addedBy = null
+            ))
+        }
+        return group
+    }
 }

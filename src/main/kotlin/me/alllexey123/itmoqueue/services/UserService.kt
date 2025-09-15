@@ -16,7 +16,22 @@ class UserService (private val userRepository: UserRepository) {
         return userRepository.findAll()
     }
 
+    fun findByTelegramId(telegramId: Long): User? {
+        return userRepository.findByTelegramId(telegramId)
+    }
+
     fun save(user: User): User {
         return userRepository.save(user)
+    }
+
+    fun getOrCreateByTelegramId(telegramId: Long): User {
+        val user = findByTelegramId(telegramId)
+        if (user == null) {
+            return save(User(
+                nickname = null,
+                telegramId = telegramId
+            ))
+        }
+        return user
     }
 }
