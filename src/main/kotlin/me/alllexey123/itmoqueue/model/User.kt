@@ -14,8 +14,10 @@ class User(
 
     var surname: String,
 
-    var email: String,
+    @Column(unique = true, nullable = false)
+    var telegramId: Long,
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "user", orphanRemoval = true)
     var memberships: MutableSet<Membership>,
-)
+
+    )
