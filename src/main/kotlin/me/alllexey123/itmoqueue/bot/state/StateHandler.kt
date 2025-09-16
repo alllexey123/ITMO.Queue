@@ -1,32 +1,31 @@
-package me.alllexey123.itmoqueue.bot.command
+package me.alllexey123.itmoqueue.bot.state
 
 import me.alllexey123.itmoqueue.bot.Scope
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.generics.TelegramClient
 
-interface CommandHandler {
+interface StateHandler {
 
-    fun handle(message: Message)
-
-    fun command(): String
+    // return true if success
+    fun handle(message: Message): Boolean
 
     fun scope(): Scope
 
     fun groupChatOnlyError(client: TelegramClient, message: Message) {
         client.execute(
             SendMessage.builder()
-                .text("Эта команда доступна только для групп")
+                .text("Эта возможность доступна только для групп, введите /cancel")
                 .replyToMessageId(message.messageId)
                 .chatId(message.chatId)
                 .build()
         )
     }
 
-    fun userChatOnlyError(client: TelegramClient, message: Message) {
+    fun privateChatOnlyError(client: TelegramClient, message: Message) {
         client.execute(
             SendMessage.builder()
-                .text("Эта команда доступна только для ЛС")
+                .text("Эта возможность доступна только для ЛС, введите /cancel")
                 .replyToMessageId(message.messageId)
                 .chatId(message.chatId)
                 .build()

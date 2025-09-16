@@ -1,0 +1,32 @@
+package me.alllexey123.itmoqueue.bot.state
+
+import jakarta.transaction.Transactional
+import org.springframework.stereotype.Component
+import org.telegram.telegrambots.meta.api.objects.message.Message
+
+@Component
+class StateManager {
+
+    val runtimeHandlers = mutableMapOf<Long, StateHandler>()
+
+    fun setHandler(chatId: Long, handler: StateHandler) {
+        runtimeHandlers[chatId] = handler
+    }
+
+    fun hasHandler(chatId: Long): Boolean {
+        return runtimeHandlers.containsKey(chatId)
+    }
+
+    fun removeHandler(chatId: Long): StateHandler? {
+        return runtimeHandlers.remove(chatId)
+    }
+
+    @Transactional
+    fun handle(message: Message) {
+        val chatId = message.chat.id
+        val success = runtimeHandlers[chatId]?.handle(message) ?: true
+        if (success) {
+            removeHandler(chatId)
+        }
+    }
+}

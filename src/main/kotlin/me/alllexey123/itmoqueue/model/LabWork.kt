@@ -18,4 +18,7 @@ class LabWork(
 
     @OneToMany(mappedBy = "labWork", cascade = [(CascadeType.ALL)], orphanRemoval = true)
     var queues: MutableList<Queue> = mutableListOf(),
+
+    @ManyToOne
+    var subject: Subject,
 )
