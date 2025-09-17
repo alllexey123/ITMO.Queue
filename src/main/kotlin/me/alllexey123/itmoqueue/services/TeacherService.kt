@@ -10,5 +10,4 @@ class TeacherService(private val teacherRepository: TeacherRepository) {
     fun save(teacher: Teacher): Teacher {
         return teacherRepository.save(teacher)
     }
-
 }

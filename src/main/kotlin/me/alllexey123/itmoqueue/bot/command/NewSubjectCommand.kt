@@ -7,7 +7,7 @@ import me.alllexey123.itmoqueue.services.TelegramService
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ForceReplyKeyboard
+import me.alllexey123.itmoqueue.bot.extensions.*
 
 @Component
 class NewSubjectCommand(
@@ -20,19 +20,13 @@ class NewSubjectCommand(
         val chat = message.chat
         val messageBuilder = SendMessage.builder()
             .chatId(chat.id)
-            .text("Введите название предмета (/cancel для отмены):")
             .replyToMessageId(message.messageId)
-            .replyMarkup(
-                ForceReplyKeyboard.builder()
-                    .inputFieldPlaceholder("предмет")
-                    .forceReply(true)
-                    .selective(true)
-                    .build()
-            ).build()
+            .withForceReply("Введите новое название предмета (отмена - /cancel):")
 
         stateManager.setHandler(chat.id, addSubjectState)
         telegramService.client.execute(messageBuilder)
     }
+
 
     override fun command() = "new_subject"
 

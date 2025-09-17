@@ -20,5 +20,5 @@ class LabWork(
     var queues: MutableList<Queue> = mutableListOf(),
 
     @ManyToOne
-    var subject: Subject,
+    var subject: Subject?,
 )

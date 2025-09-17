@@ -5,12 +5,14 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.generics.TelegramClient
 
-interface StateHandler {
+abstract class StateHandler {
+
+    val chatData = mutableMapOf<Long, String>()
 
     // return true if success
-    fun handle(message: Message): Boolean
+    abstract fun handle(message: Message): Boolean
 
-    fun scope(): Scope
+    abstract fun scope(): Scope
 
     fun groupChatOnlyError(client: TelegramClient, message: Message) {
         client.execute(
@@ -30,5 +32,17 @@ interface StateHandler {
                 .chatId(message.chatId)
                 .build()
         )
+    }
+
+    fun getChatData(chatId: Long): String? {
+        return chatData[chatId]
+    }
+
+    fun setChatData(chatId: Long, data: String) {
+        chatData[chatId] = data
+    }
+
+    fun removeChatData(chatId: Long) {
+        chatData.remove(chatId)
     }
 }

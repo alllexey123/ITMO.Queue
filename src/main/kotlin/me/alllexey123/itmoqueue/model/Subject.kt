@@ -15,7 +15,7 @@ class Subject (
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
 
-    val name: String,
+    var name: String,
 
     @ManyToOne(fetch = FetchType.LAZY)
     val group: Group,

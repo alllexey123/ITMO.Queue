@@ -6,6 +6,7 @@ import me.alllexey123.itmoqueue.services.TelegramService
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
+import me.alllexey123.itmoqueue.bot.extensions.*
 
 @Component
 class CancelCommand(private val stateManager: StateManager,
@@ -15,10 +16,9 @@ class CancelCommand(private val stateManager: StateManager,
     override fun handle(message: Message) {
         val handler = stateManager.removeHandler(message.chatId)
         val sendMessage = SendMessage.builder()
-            .chatId(message.chatId)
             .text(if (handler == null) "Никакое действие не требовалось" else "Действие отменено")
-            .replyToMessageId(message.messageId)
-            .build()
+            .withReplyTo(message)
+
         telegramService.client.execute(sendMessage)
     }
 

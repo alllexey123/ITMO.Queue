@@ -4,6 +4,7 @@ import me.alllexey123.itmoqueue.bot.Scope
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.generics.TelegramClient
+import me.alllexey123.itmoqueue.bot.extensions.*
 
 interface CommandHandler {
 
@@ -17,9 +18,7 @@ interface CommandHandler {
         client.execute(
             SendMessage.builder()
                 .text("Эта команда доступна только для групп")
-                .replyToMessageId(message.messageId)
-                .chatId(message.chatId)
-                .build()
+                .withReplyTo(message)
         )
     }
 
@@ -27,9 +26,7 @@ interface CommandHandler {
         client.execute(
             SendMessage.builder()
                 .text("Эта команда доступна только для ЛС")
-                .replyToMessageId(message.messageId)
-                .chatId(message.chatId)
-                .build()
+                .withReplyTo(message)
         )
     }
 }

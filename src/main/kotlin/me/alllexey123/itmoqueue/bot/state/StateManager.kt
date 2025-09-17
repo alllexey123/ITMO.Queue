@@ -18,7 +18,9 @@ class StateManager {
     }
 
     fun removeHandler(chatId: Long): StateHandler? {
-        return runtimeHandlers.remove(chatId)
+        val handler = runtimeHandlers.remove(chatId)
+        handler?.removeChatData(chatId)
+        return handler
     }
 
     @Transactional
