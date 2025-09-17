@@ -15,14 +15,35 @@ class Validators(private val telegramService: TelegramService) {
         group: Group
     ): Boolean {
 
-        if (subjectName.length > 30) {
-            val msg = sendMessage.withForceReply("Название предмета длиннее 30 символов, попробуйте снова")
+        if (subjectName.length > 20) {
+            val msg = sendMessage.withForceReply("Название предмета длиннее 20 символов, попробуйте снова")
             telegramService.client.execute(msg)
             return false
         }
 
         if (group.subjects.any { subject -> subject.name == subjectName }) {
             val msg = sendMessage.withForceReply("Предмет с таким названием уже добавлен, попробуйте снова")
+            telegramService.client.execute(msg)
+            return false
+        }
+
+        return true
+    }
+
+    fun checkLabName(
+        labName: String,
+        sendMessage: SendMessage.SendMessageBuilder<*, *>,
+        group: Group
+    ): Boolean {
+
+        if (labName.length > 20) {
+            val msg = sendMessage.withForceReply("Название лабы длиннее 20 символов, попробуйте снова")
+            telegramService.client.execute(msg)
+            return false
+        }
+
+        if (group.labs.any { work -> work.name == labName }) {
+            val msg = sendMessage.withForceReply("Лаба с таким названием уже добавлена, попробуйте снова")
             telegramService.client.execute(msg)
             return false
         }

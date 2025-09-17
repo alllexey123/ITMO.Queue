@@ -119,8 +119,7 @@ class ListSubjectsCommand(
     }
 
     override fun handle(callbackQuery: CallbackQuery) {
-        val data = removePrefix(callbackQuery.data)
-        val split = data.split(" ")
+        val split = removePrefix(callbackQuery.data).split(" ")
         val message = callbackQuery.message
         val chat = message.chat
         when (split[0]) {

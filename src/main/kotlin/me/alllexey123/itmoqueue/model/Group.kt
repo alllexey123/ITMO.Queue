@@ -16,7 +16,7 @@ class Group (
     var members: MutableSet<Membership> = mutableSetOf(),
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
-    var works: MutableList<LabWork> = mutableListOf(),
+    var labs: MutableList<LabWork> = mutableListOf(),
 
     @Column(unique = true, nullable = false)
     var chatId: Long,
