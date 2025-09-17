@@ -51,9 +51,9 @@ class ListSubjectsCommand(
                 }
                 appendLine()
             } else {
-                append("Пока тут пусто")
+                appendLine("Пока тут пусто\n")
             }
-            append("Добавить предмет - /new_subject")
+            appendLine("Добавить предмет - /new_subject")
         }
     }
 
