@@ -12,7 +12,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
 
 @Component
-class AddSubjectState(
+class EnterSubjectNameState(
     private val groupService: GroupService,
     private val telegramService: TelegramService,
     private val subjectService: SubjectService,
