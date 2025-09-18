@@ -1,17 +1,17 @@
 package me.alllexey123.itmoqueue.bot.command
 
+import me.alllexey123.itmoqueue.bot.Emoji
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.callback.CallbackHandler
 import me.alllexey123.itmoqueue.bot.extensions.edit
 import me.alllexey123.itmoqueue.bot.extensions.inlineButton
+import me.alllexey123.itmoqueue.bot.extensions.inlineRowButton
 import me.alllexey123.itmoqueue.bot.extensions.withInlineKeyboard
 import me.alllexey123.itmoqueue.bot.state.EditLabNameState
-import me.alllexey123.itmoqueue.bot.state.EditSubjectState
 import me.alllexey123.itmoqueue.bot.state.StateManager
 import me.alllexey123.itmoqueue.model.LabWork
 import me.alllexey123.itmoqueue.services.GroupService
 import me.alllexey123.itmoqueue.services.LabWorkService
-import me.alllexey123.itmoqueue.services.SubjectService
 import me.alllexey123.itmoqueue.services.TelegramService
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
@@ -78,10 +78,10 @@ class ListLabsCommand(
 
         val pagination = mutableListOf<InlineKeyboardButton>()
         if (page > 1) {
-            pagination.add(inlineButton("⬅\uFE0F", addPrefix("lab_page ${page - 1}")))
+            pagination.add(inlineButton(Emoji.ARROW_LEFT, addPrefix("lab_page ${page - 1}")))
         }
         if (page * perPage < labs.size) {
-            pagination.add(inlineButton("➡\uFE0F", addPrefix("lab_page ${page + 1}")))
+            pagination.add(inlineButton(Emoji.ARROW_RIGHT, addPrefix("lab_page ${page + 1}")))
         }
         if (pagination.isNotEmpty()) {
             rows.add(InlineKeyboardRow(pagination))
@@ -111,18 +111,9 @@ class ListLabsCommand(
         rows.add(
             InlineKeyboardRow(
                 listOf(
-                    InlineKeyboardButton.builder()
-                        .text("Изменить")
-                        .callbackData(addPrefix("edit ${lab.id}"))
-                        .build(),
-                    InlineKeyboardButton.builder()
-                        .text("Удалить")
-                        .callbackData(addPrefix("delete ${lab.id}"))
-                        .build(),
-                    InlineKeyboardButton.builder()
-                        .text("Назад")
-                        .callbackData(addPrefix("main"))
-                        .build(),
+                    inlineButton(Emoji.BACK, addPrefix("main")),
+                    inlineButton(Emoji.EDIT, addPrefix("edit ${lab.id}")),
+                    inlineButton(Emoji.DELETE, addPrefix("delete ${lab.id}"))
                 )
             )
         )
@@ -156,6 +147,9 @@ class ListLabsCommand(
                 val editMessage = EditMessageText.builder()
                     .edit(message)
                     .text("Введите новое название лабы (ответом на это сообщение):")
+                    .replyMarkup(InlineKeyboardMarkup.builder().keyboardRow(
+                        inlineRowButton(Emoji.BACK, addPrefix("select $labId")),
+                    ).build())
                     .build()
 
                 editLabNameState.setChatData(chat.id, labId.toString())

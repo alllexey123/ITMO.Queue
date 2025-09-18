@@ -1,5 +1,6 @@
 package me.alllexey123.itmoqueue.bot.command
 
+import me.alllexey123.itmoqueue.bot.Emoji
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.callback.CallbackHandler
 import me.alllexey123.itmoqueue.bot.extensions.replyTo
@@ -55,16 +56,16 @@ class NewLabCommand(
 
         val pagination = mutableListOf<InlineKeyboardButton>()
         if (page > 1) {
-            pagination.add(inlineButton("⬅\uFE0F", addPrefix("subject_page ${page - 1}")))
+            pagination.add(inlineButton(Emoji.ARROW_RIGHT, addPrefix("subject_page ${page - 1}")))
         }
         if (page * perPage < subjects.size) {
-            pagination.add(inlineButton("➡\uFE0F", addPrefix("subject_page ${page + 1}")))
+            pagination.add(inlineButton(Emoji.ARROW_RIGHT, addPrefix("subject_page ${page + 1}")))
         }
         if (pagination.isNotEmpty()) {
             rows.add(InlineKeyboardRow(pagination))
         }
 
-        rows.add(inlineRowButton("❌", addPrefix("cancel")))
+        rows.add(inlineRowButton(Emoji.CANCEL, addPrefix("cancel")))
 
         return InlineKeyboardMarkup(rows)
     }
