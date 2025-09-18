@@ -1,8 +1,11 @@
 package me.alllexey123.itmoqueue.bot.command
 
+import me.alllexey123.itmoqueue.bot.Emoji
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.callback.CallbackHandler
 import me.alllexey123.itmoqueue.bot.extensions.edit
+import me.alllexey123.itmoqueue.bot.extensions.inlineButton
+import me.alllexey123.itmoqueue.bot.extensions.inlineRowButton
 import me.alllexey123.itmoqueue.bot.extensions.withInlineKeyboard
 import me.alllexey123.itmoqueue.bot.state.EditSubjectState
 import me.alllexey123.itmoqueue.bot.state.StateManager
@@ -79,14 +82,15 @@ class ListSubjectsCommand(
         }
 
         return buildString {
-            appendLine("Предмет <strong>${subject.name}</strong>:")
+            appendLine("Предмет \"*${subject.name}*\"")
 
             if (subject.labWorks.isEmpty()) {
                 appendLine("Лабораторных работ пока не было")
-            }
-
-            subject.labWorks.forEachIndexed { i, labWork ->
-                appendLine("${i + 1}. ${labWork.name}")
+            } else {
+                appendLine("Лабы: ")
+                subject.labWorks.forEachIndexed { i, labWork ->
+                    appendLine("${i + 1}. ${labWork.name}")
+                }
             }
         }
     }
@@ -100,18 +104,9 @@ class ListSubjectsCommand(
         rows.add(
             InlineKeyboardRow(
                 listOf(
-                    InlineKeyboardButton.builder()
-                        .text("Изменить")
-                        .callbackData(addPrefix("edit ${subject.id}"))
-                        .build(),
-                    InlineKeyboardButton.builder()
-                        .text("Удалить")
-                        .callbackData(addPrefix("delete ${subject.id}"))
-                        .build(),
-                    InlineKeyboardButton.builder()
-                        .text("Назад")
-                        .callbackData(addPrefix("main"))
-                        .build(),
+                    inlineButton(Emoji.BACK, addPrefix("main")),
+                    inlineButton(Emoji.EDIT, addPrefix("edit ${subject.id}")),
+                    inlineButton(Emoji.DELETE, addPrefix("delete ${subject.id}"))
                 )
             )
         )
@@ -127,7 +122,7 @@ class ListSubjectsCommand(
                 val subject = subjectService.findById(split[1].toLong())
                 val editMessage = EditMessageText.builder()
                     .edit(message)
-                    .parseMode(ParseMode.HTML)
+                    .parseMode(ParseMode.MARKDOWN)
                     .withInlineKeyboard(getSubjectText(subject), getSubjectKeyboard(subject))
 
                 telegramService.client.execute(editMessage)
@@ -145,6 +140,11 @@ class ListSubjectsCommand(
                 val editMessage = EditMessageText.builder()
                     .edit(message)
                     .text("Введите новое название предмета (ответом на это сообщение):")
+                    .replyMarkup(
+                        InlineKeyboardMarkup.builder().keyboardRow(
+                            inlineRowButton(Emoji.BACK, addPrefix("select $subjectId"))
+                        ).build()
+                    )
                     .build()
 
                 editSubjectState.setChatData(chat.id, subjectId.toString())
