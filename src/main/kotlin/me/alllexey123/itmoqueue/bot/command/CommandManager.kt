@@ -44,10 +44,10 @@ class CommandManager(
                     } else {
                         val isUserChat = message.chat.isUserChat
                         if (scope() == Scope.USER) {
-                            if (isUserChat) handle(message) else groupChatOnlyError(telegramService.client, message)
+                            if (isUserChat) handle(message) else userChatOnlyError(telegramService.client, message)
                         }
                         if (scope() == Scope.GROUP) {
-                            if (!isUserChat) handle(message) else userChatOnlyError(telegramService.client, message)
+                            if (!isUserChat) handle(message) else groupChatOnlyError(telegramService.client, message)
                         }
                     }
                 }
