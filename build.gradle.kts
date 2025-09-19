@@ -21,7 +21,6 @@ repositories {
 }
 
 dependencies {
-	implementation("org.telegram:telegrambots-extensions:9.1.0")
 	implementation("org.telegram:telegrambots-client:9.1.0")
 	implementation("org.telegram:telegrambots-longpolling:9.1.0")
 //	implementation("org.telegram:telegrambots:6.9.7.1")
