@@ -13,7 +13,7 @@ class Group(
     var name: String?,
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
-    val members: MutableSet<User> = mutableSetOf(),
+    val members: MutableSet<Membership> = mutableSetOf(),
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
     val labs: MutableList<LabWork> = mutableListOf(),
