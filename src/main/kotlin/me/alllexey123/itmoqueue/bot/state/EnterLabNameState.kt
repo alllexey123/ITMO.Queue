@@ -11,7 +11,7 @@ import me.alllexey123.itmoqueue.services.GroupService
 import me.alllexey123.itmoqueue.services.LabWorkService
 import me.alllexey123.itmoqueue.services.QueueService
 import me.alllexey123.itmoqueue.services.SubjectService
-import me.alllexey123.itmoqueue.services.TelegramService
+import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
@@ -19,7 +19,7 @@ import org.telegram.telegrambots.meta.api.objects.message.Message
 @Component
 class EnterLabNameState(
     private val groupService: GroupService,
-    private val telegramService: TelegramService,
+    private val telegram: Telegram,
     private val subjectService: SubjectService,
     private val validators: Validators,
     private val labWorkService: LabWorkService,
@@ -43,7 +43,7 @@ class EnterLabNameState(
         val check = validators.checkLabName(labName, group)
         if (check is ValidationResult.Failure){
             sendMessage.text(check.msg)
-            telegramService.client.execute(sendMessage.build())
+            telegram.execute(sendMessage.build())
             return false
         }
 
@@ -71,7 +71,7 @@ class EnterLabNameState(
         """.trimIndent()
         )
 
-        telegramService.client.execute(sendMessage.build())
+        telegram.execute(sendMessage.build())
         return true
     }
 

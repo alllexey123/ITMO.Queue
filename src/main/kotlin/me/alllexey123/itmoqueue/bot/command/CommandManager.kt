@@ -3,7 +3,7 @@ package me.alllexey123.itmoqueue.bot.command
 import jakarta.annotation.PostConstruct
 import jakarta.transaction.Transactional
 import me.alllexey123.itmoqueue.bot.Scope
-import me.alllexey123.itmoqueue.services.TelegramService
+import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.message.Message
 
@@ -14,7 +14,7 @@ class CommandManager(
     private val startCommand: StartCommand,
     private val newSubjectCommand: NewSubjectCommand,
     private val cancelCommand: CancelCommand,
-    private val telegramService: TelegramService,
+    private val telegram: Telegram,
     private val listSubjectsCommand: ListSubjectsCommand
 ) {
 
@@ -44,10 +44,10 @@ class CommandManager(
                     } else {
                         val isUserChat = message.chat.isUserChat
                         if (scope() == Scope.USER) {
-                            if (isUserChat) handle(message) else userChatOnlyError(telegramService.client, message)
+                            if (isUserChat) handle(message) else userChatOnlyError(telegram, message)
                         }
                         if (scope() == Scope.GROUP) {
-                            if (!isUserChat) handle(message) else groupChatOnlyError(telegramService.client, message)
+                            if (!isUserChat) handle(message) else groupChatOnlyError(telegram, message)
                         }
                     }
                 }

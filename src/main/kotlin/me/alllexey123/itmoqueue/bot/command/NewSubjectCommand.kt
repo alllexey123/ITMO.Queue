@@ -3,7 +3,7 @@ package me.alllexey123.itmoqueue.bot.command
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.state.EnterSubjectNameState
 import me.alllexey123.itmoqueue.bot.state.StateManager
-import me.alllexey123.itmoqueue.services.TelegramService
+import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
@@ -11,7 +11,7 @@ import me.alllexey123.itmoqueue.bot.extensions.*
 
 @Component
 class NewSubjectCommand(
-    private val telegramService: TelegramService,
+    private val telegram: Telegram,
     private val stateManager: StateManager,
     private val enterSubjectNameState: EnterSubjectNameState
 ) : CommandHandler {
@@ -24,7 +24,7 @@ class NewSubjectCommand(
             .withForceReply("Введите новое название предмета (отмена - /cancel):")
 
         stateManager.setHandler(chat.id, enterSubjectNameState)
-        telegramService.client.execute(messageBuilder)
+        telegram.execute(messageBuilder)
     }
 
 

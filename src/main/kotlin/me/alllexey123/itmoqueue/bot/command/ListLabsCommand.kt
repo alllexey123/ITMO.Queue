@@ -14,39 +14,28 @@ import me.alllexey123.itmoqueue.model.Queue
 import me.alllexey123.itmoqueue.model.QueueEntry
 import me.alllexey123.itmoqueue.model.QueueType
 import me.alllexey123.itmoqueue.services.*
-import org.hibernate.query.sqm.TemporalUnit
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.ParseMode
-import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod
-import org.telegram.telegrambots.meta.api.methods.send.SendChatAction
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import org.telegram.telegrambots.meta.api.methods.send.SendVenue
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery
-import org.telegram.telegrambots.meta.api.objects.ReplyParameters
 import org.telegram.telegrambots.meta.api.objects.message.MaybeInaccessibleMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
-import java.io.Serializable
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.OffsetDateTime
-import java.time.OffsetTime
-import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalAdjusters
 import java.util.stream.IntStream
 
 @Component
 class ListLabsCommand(
     private val groupService: GroupService,
-    private val telegramService: TelegramService,
+    private val telegram: Telegram,
     private val stateManager: StateManager,
     private val labWorkService: LabWorkService,
     private val editLabNameState: EditLabNameState,
@@ -63,7 +52,7 @@ class ListLabsCommand(
             .chatId(message.chat.id)
             .withInlineKeyboard(getListMessageText(labs), getListKeyboard(labs))
 
-        telegramService.client.execute(sendMessage)
+        telegram.execute(sendMessage)
     }
 
     val perPage = 9
@@ -212,14 +201,14 @@ class ListLabsCommand(
                         .cacheTime(from.until(from, ChronoUnit.SECONDS).toInt())
                         .build()
 
-                    telegramService.client.execute(sendToast)
+                    telegram.execute(sendToast)
                 } else {
                     val editMessage = EditMessageText.builder()
                         .edit(message)
                         .parseMode(ParseMode.MARKDOWN)
                         .withInlineKeyboard(getLabText(lab), getLabKeyboard(lab))
 
-                    telegramService.client.execute(editMessage)
+                    telegram.execute(editMessage)
                 }
             }
 
@@ -245,7 +234,7 @@ class ListLabsCommand(
                 editLabNameState.setChatData(chat.id, labId.toString())
                 stateManager.setHandler(chat.id, editLabNameState)
 
-                telegramService.client.execute(editMessage)
+                telegram.execute(editMessage)
             }
 
             "main" -> {
@@ -260,7 +249,7 @@ class ListLabsCommand(
                     .edit(message)
                     .withInlineKeyboard(getListMessageText(labs, page), getListKeyboard(labs, page = page))
 
-                telegramService.client.execute(editMessage)
+                telegram.execute(editMessage)
             }
 
             "add_to_queue" -> {
@@ -275,7 +264,7 @@ class ListLabsCommand(
                         .callbackQueryId(callbackQuery.id)
                         .build()
 
-                    telegramService.client.execute(action)
+                    telegram.execute(action)
                 } else {
                     val action = SendMessage.builder()
                         .chatId(chat.id)
@@ -283,7 +272,7 @@ class ListLabsCommand(
                         .replyMarkup(getAttemptKeyboard(lab.id))
                         .build()
 
-                    telegramService.client.execute(action)
+                    telegram.execute(action)
                 }
             }
 
@@ -317,7 +306,7 @@ class ListLabsCommand(
                     )
                 }
 
-                telegramService.client.execute(editMessage.build())
+                telegram.execute(editMessage.build())
             }
         }
     }
@@ -327,7 +316,7 @@ class ListLabsCommand(
         val editMessage = EditMessageText.builder()
             .edit(message)
             .withInlineKeyboard(getListMessageText(labs), getListKeyboard(labs))
-        telegramService.client.execute(editMessage)
+        telegram.execute(editMessage)
     }
 
 

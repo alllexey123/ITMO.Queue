@@ -12,7 +12,7 @@ import me.alllexey123.itmoqueue.bot.state.StateManager
 import me.alllexey123.itmoqueue.model.Subject
 import me.alllexey123.itmoqueue.services.GroupService
 import me.alllexey123.itmoqueue.services.SubjectService
-import me.alllexey123.itmoqueue.services.TelegramService
+import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
@@ -27,7 +27,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 @Component
 class ListSubjectsCommand(
     private val groupService: GroupService,
-    private val telegramService: TelegramService,
+    private val telegram: Telegram,
     private val subjectService: SubjectService,
     private val editSubjectState: EditSubjectState,
     private val stateManager: StateManager
@@ -42,7 +42,7 @@ class ListSubjectsCommand(
             .chatId(message.chat.id)
             .withInlineKeyboard(getListMessageText(subjects), getListKeyboard(subjects))
 
-        telegramService.client.execute(sendMessage)
+        telegram.execute(sendMessage)
     }
 
     fun getListMessageText(subjects: List<Subject>): String {
@@ -125,7 +125,7 @@ class ListSubjectsCommand(
                     .parseMode(ParseMode.MARKDOWN)
                     .withInlineKeyboard(getSubjectText(subject), getSubjectKeyboard(subject))
 
-                telegramService.client.execute(editMessage)
+                telegram.execute(editMessage)
             }
 
             "delete" -> {
@@ -150,7 +150,7 @@ class ListSubjectsCommand(
                 editSubjectState.setChatData(chat.id, subjectId.toString())
                 stateManager.setHandler(chat.id, editSubjectState)
 
-                telegramService.client.execute(editMessage)
+                telegram.execute(editMessage)
             }
 
             "main" -> {
@@ -164,7 +164,7 @@ class ListSubjectsCommand(
         val editMessage = EditMessageText.builder()
             .edit(message)
             .withInlineKeyboard(getListMessageText(subjects), getListKeyboard(subjects))
-        telegramService.client.execute(editMessage)
+        telegram.execute(editMessage)
     }
 
 

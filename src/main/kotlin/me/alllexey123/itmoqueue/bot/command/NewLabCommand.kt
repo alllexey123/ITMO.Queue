@@ -6,7 +6,7 @@ import me.alllexey123.itmoqueue.bot.callback.CallbackHandler
 import me.alllexey123.itmoqueue.bot.extensions.replyTo
 import me.alllexey123.itmoqueue.model.Subject
 import me.alllexey123.itmoqueue.services.GroupService
-import me.alllexey123.itmoqueue.services.TelegramService
+import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
@@ -21,7 +21,7 @@ import me.alllexey123.itmoqueue.bot.state.StateManager
 
 @Component
 class NewLabCommand(
-    private val telegramService: TelegramService,
+    private val telegram: Telegram,
     private val groupService: GroupService,
     private val stateManager: StateManager,
     private val enterLabNameState: EnterLabNameState
@@ -42,7 +42,7 @@ class NewLabCommand(
             sendMessageBuilder.text("Не добавлен ни один предмет\n\nДобавить предмет - /new_subject")
         }
 
-        telegramService.client.execute(sendMessageBuilder.build())
+        telegram.execute(sendMessageBuilder.build())
     }
 
     fun getSubjectListButtons(subjects: List<Subject>, page: Int = 1): InlineKeyboardMarkup {
@@ -85,7 +85,7 @@ class NewLabCommand(
                 enterLabNameState.setChatData(message.chatId, removePrefix(callbackQuery.data))
                 stateManager.setHandler(message.chatId, enterLabNameState)
 
-                telegramService.client.execute(editMessage)
+                telegram.execute(editMessage)
             }
 
             "subject_page" -> {
@@ -94,11 +94,11 @@ class NewLabCommand(
                     .edit(message)
                     .withInlineKeyboard("Выберите предмет (стр. $page): ", getSubjectListButtons(group.subjects, page))
 
-                telegramService.client.execute(editMessage)
+                telegram.execute(editMessage)
             }
 
             "cancel" -> {
-                telegramService.client.execute(
+                telegram.execute(
                     EditMessageText.builder()
                         .text("Создание лабы отменено")
                         .edit(message)

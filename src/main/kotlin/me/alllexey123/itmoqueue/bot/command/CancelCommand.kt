@@ -2,7 +2,7 @@ package me.alllexey123.itmoqueue.bot.command
 
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.state.StateManager
-import me.alllexey123.itmoqueue.services.TelegramService
+import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
@@ -10,7 +10,7 @@ import me.alllexey123.itmoqueue.bot.extensions.*
 
 @Component
 class CancelCommand(private val stateManager: StateManager,
-                    private val telegramService: TelegramService
+                    private val telegram: Telegram
 ) : CommandHandler {
 
     override fun handle(message: Message) {
@@ -19,7 +19,7 @@ class CancelCommand(private val stateManager: StateManager,
             .text(if (handler == null) "Никакое действие не требовалось" else "Действие отменено")
             .withReplyTo(message)
 
-        telegramService.client.execute(sendMessage)
+        telegram.execute(sendMessage)
     }
 
     override fun command() = "cancel"
