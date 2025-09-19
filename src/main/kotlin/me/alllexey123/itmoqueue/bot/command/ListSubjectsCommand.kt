@@ -67,7 +67,7 @@ class ListSubjectsCommand(
                 chunk.mapIndexed { i, subject ->
                     InlineKeyboardButton.builder()
                         .text((subjects.indexOf(subject) + 1).toString())
-                        .callbackData(addPrefix("select ${subject.id}"))
+                        .callbackData(encode("select", subject.id))
                         .build()
                 }
             )
@@ -104,9 +104,9 @@ class ListSubjectsCommand(
         rows.add(
             InlineKeyboardRow(
                 listOf(
-                    inlineButton(Emoji.BACK, addPrefix("main")),
-                    inlineButton(Emoji.EDIT, addPrefix("edit ${subject.id}")),
-                    inlineButton(Emoji.DELETE, addPrefix("delete ${subject.id}"))
+                    inlineButton(Emoji.BACK, encode("main")),
+                    inlineButton(Emoji.EDIT, encode("edit", subject.id)),
+                    inlineButton(Emoji.DELETE, encode("delete", subject.id))
                 )
             )
         )
@@ -114,7 +114,7 @@ class ListSubjectsCommand(
     }
 
     override fun handle(callbackQuery: CallbackQuery) {
-        val split = removePrefix(callbackQuery.data).split(" ")
+        val split = decode(callbackQuery.data)
         val message = callbackQuery.message
         val chat = message.chat
         when (split[0]) {
@@ -142,12 +142,12 @@ class ListSubjectsCommand(
                     .text("Введите новое название предмета (ответом на это сообщение):")
                     .replyMarkup(
                         InlineKeyboardMarkup.builder().keyboardRow(
-                            inlineRowButton(Emoji.BACK, addPrefix("select $subjectId"))
+                            inlineRowButton(Emoji.BACK, encode("select", subjectId))
                         ).build()
                     )
                     .build()
 
-                editSubjectState.setChatData(chat.id, subjectId.toString())
+                editSubjectState.setChatData(chat.id, subjectId)
                 stateManager.setHandler(chat.id, editSubjectState)
 
                 telegram.execute(editMessage)

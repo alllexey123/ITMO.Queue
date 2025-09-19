@@ -23,7 +23,7 @@ class EditSubjectState(
         val chat = message.chat
         val subjectName = message.text.trim()
         val group = groupService.getOrCreateByChatId(chat.id)
-        val subjectId = getChatData(chat.id)?.toLong()
+        val subjectId = getChatData(chat.id)?.getOrNull(0)?.toLong()
 
         if (subjectId == null) return true
         val subject = subjectService.findById(subjectId)

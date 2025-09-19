@@ -1,45 +1,24 @@
 package me.alllexey123.itmoqueue.bot.state
 
+import me.alllexey123.itmoqueue.bot.Encoder
 import me.alllexey123.itmoqueue.bot.Scope
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
-import org.telegram.telegrambots.meta.generics.TelegramClient
 
-abstract class StateHandler {
+abstract class StateHandler : Encoder {
 
-    val chatData = mutableMapOf<Long, String>()
+    val chatData = mutableMapOf<Long, List<String>>()
 
     // return true if success
     abstract fun handle(message: Message): Boolean
 
     abstract fun scope(): Scope
 
-    fun groupChatOnlyError(client: TelegramClient, message: Message) {
-        client.execute(
-            SendMessage.builder()
-                .text("Эта возможность доступна только для групп, введите /cancel")
-                .replyToMessageId(message.messageId)
-                .chatId(message.chatId)
-                .build()
-        )
+    fun getChatData(chatId: Long): List<String>? {
+        return chatData[chatId]?.map { s -> decodeParam(s) }
     }
 
-    fun privateChatOnlyError(client: TelegramClient, message: Message) {
-        client.execute(
-            SendMessage.builder()
-                .text("Эта возможность доступна только для ЛС, введите /cancel")
-                .replyToMessageId(message.messageId)
-                .chatId(message.chatId)
-                .build()
-        )
-    }
-
-    fun getChatData(chatId: Long): String? {
-        return chatData[chatId]
-    }
-
-    fun setChatData(chatId: Long, data: String) {
-        chatData[chatId] = data
+    fun setChatData(chatId: Long, vararg data: Any?) {
+        chatData[chatId] = data.map { o -> encodeParam(o) }
     }
 
     fun removeChatData(chatId: Long) {

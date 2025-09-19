@@ -51,28 +51,28 @@ class NewLabCommand(
         val pageSubjects = subjects.drop((page - 1) * perPage).take(perPage)
 
         val rows = pageSubjects.map { subject ->
-            inlineRowButton(subject.name, addPrefix("subject ${subject.id}"))
+            inlineRowButton(subject.name, encode("subject", subject.id))
         }.toMutableList()
 
         val pagination = mutableListOf<InlineKeyboardButton>()
         if (page > 1) {
-            pagination.add(inlineButton(Emoji.ARROW_RIGHT, addPrefix("subject_page ${page - 1}")))
+            pagination.add(inlineButton(Emoji.ARROW_RIGHT, encode("subject_page", page - 1)))
         }
         if (page * perPage < subjects.size) {
-            pagination.add(inlineButton(Emoji.ARROW_RIGHT, addPrefix("subject_page ${page + 1}")))
+            pagination.add(inlineButton(Emoji.ARROW_RIGHT, encode("subject_page", page + 1)))
         }
         if (pagination.isNotEmpty()) {
             rows.add(InlineKeyboardRow(pagination))
         }
 
-        rows.add(inlineRowButton(Emoji.CANCEL, addPrefix("cancel")))
+        rows.add(inlineRowButton(Emoji.CANCEL, encode("cancel")))
 
         return InlineKeyboardMarkup(rows)
     }
 
 
     override fun handle(callbackQuery: CallbackQuery) {
-        val split = removePrefix(callbackQuery.data).split(" ")
+        val split = decode(callbackQuery.data)
         val message = callbackQuery.message
         val group = groupService.getOrCreateByChatId(message.chatId)
         when (split[0]) {
@@ -82,7 +82,7 @@ class NewLabCommand(
                     .text("Введите название лабы (ответом на это сообщение):")
                     .build()
 
-                enterLabNameState.setChatData(message.chatId, removePrefix(callbackQuery.data))
+                enterLabNameState.setChatData(message.chatId, decode(callbackQuery.data)[1])
                 stateManager.setHandler(message.chatId, enterLabNameState)
 
                 telegram.execute(editMessage)

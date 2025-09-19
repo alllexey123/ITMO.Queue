@@ -63,8 +63,9 @@ class ListLabsCommand(
         return buildString {
             if (pageLabs.isNotEmpty()) {
                 appendLine("Список лаб:\n")
-                labs.forEachIndexed { i, lab ->
-                    appendLine("${i + 1}. ${lab.name}")
+                pageLabs.forEachIndexed { i, lab ->
+                    val labIndex = ((page - 1) * perPage + i + 1).toString()
+                    appendLine("${labIndex}. ${lab.name}")
                 }
                 appendLine()
             } else {
@@ -81,17 +82,18 @@ class ListLabsCommand(
         val rows = pageLabs.chunked(perRow).map { chunk ->
             InlineKeyboardRow(
                 chunk.mapIndexed { i, lab ->
-                    inlineButton((labs.indexOf(lab) + 1).toString(), addPrefix("select ${lab.id}"))
+                    val labIndex = ((page - 1) * perPage + i + 1).toString()
+                    inlineButton(labIndex, encode("select", lab.id))
                 }
             )
         }.toMutableList()
 
         val pagination = mutableListOf<InlineKeyboardButton>()
         if (page > 1) {
-            pagination.add(inlineButton(Emoji.ARROW_LEFT, addPrefix("lab_page ${page - 1}")))
+            pagination.add(inlineButton(Emoji.ARROW_LEFT, encode("lab_page", page - 1)))
         }
         if (page * perPage < labs.size) {
-            pagination.add(inlineButton(Emoji.ARROW_RIGHT, addPrefix("lab_page ${page + 1}")))
+            pagination.add(inlineButton(Emoji.ARROW_RIGHT, encode("lab_page", page + 1)))
         }
         if (pagination.isNotEmpty()) {
             rows.add(InlineKeyboardRow(pagination))
@@ -126,7 +128,7 @@ class ListLabsCommand(
 
         return buildString {
             appendLine("Лаба *${lab.name}*")
-            appendLine("Предмет: *${lab.subject?.name ?: "неизвестный"}*")
+            appendLine("Предмет: *${lab.subject.name}*")
             val dtf = DateTimeFormatter.ofPattern("HH:mm:ss")
             appendLine("Обновлено: " + dtf.format(LocalTime.now()))
             appendLine()
@@ -151,18 +153,18 @@ class ListLabsCommand(
         rows.add(
             InlineKeyboardRow(
                 listOf(
-                    inlineButton(Emoji.PLUS, addPrefix("add_to_queue ${lab.id}")),
-                    inlineButton(Emoji.MINUS, addPrefix("remove_from_queue ${lab.id}")),
-                    inlineButton(Emoji.REFRESH, addPrefix("select ${lab.id} ${LocalDateTime.now()}")),
+                    inlineButton(Emoji.PLUS, encode("add_to_queue", lab.id)),
+                    inlineButton(Emoji.MINUS, encode("remove_from_queue", lab.id)),
+                    inlineButton(Emoji.REFRESH, encode("select", lab.id, LocalDateTime.now())),
                 )
             )
         )
         rows.add(
             InlineKeyboardRow(
                 listOf(
-                    inlineButton(Emoji.BACK, addPrefix("main")),
-                    inlineButton(Emoji.EDIT, addPrefix("edit ${lab.id}")),
-                    inlineButton(Emoji.DELETE, addPrefix("delete ${lab.id}"))
+                    inlineButton(Emoji.BACK, encode("main")),
+                    inlineButton(Emoji.EDIT, encode("edit", lab.id)),
+                    inlineButton(Emoji.DELETE, encode("delete", lab.id))
                 )
             )
         )
@@ -171,26 +173,26 @@ class ListLabsCommand(
     }
 
     fun getAttemptKeyboard(labId: Long?): InlineKeyboardMarkup {
-        val count = 4;
+        val count = 4
         return InlineKeyboardMarkup.builder().keyboardRow(
             InlineKeyboardRow(
                 IntStream.range(1, count + 1)
                     .mapToObj { i ->
-                        inlineButton(if (i == count) "$i+" else "$i", addPrefix("add_to_queue_attempt $labId $i"))
+                        inlineButton(if (i == count) "$i+" else "$i", encode("add_to_queue_attempt", labId, i))
                     }.toList()
             )
         ).build()
     }
 
     override fun handle(callbackQuery: CallbackQuery) {
-        val split = removePrefix(callbackQuery.data).split(" ")
+        val data = decode(callbackQuery.data)
         val message = callbackQuery.message
         val chat = message.chat
         val from = callbackQuery.from
-        when (split[0]) {
+        when (data[0]) {
             "select" -> {
-                val lab = labWorkService.findById(split[1].toLong())
-                val lastUpdate = split.getOrNull(2)?.let { str ->
+                val lab = labWorkService.findById(data[1].toLong())
+                val lastUpdate = data.getOrNull(2)?.let { str ->
                     return@let LocalDateTime.parse(str)
                 }
                 val from = LocalDateTime.now().minusSeconds(15)
@@ -213,25 +215,25 @@ class ListLabsCommand(
             }
 
             "delete" -> {
-                labWorkService.deleteById(split[1].toLong())
+                labWorkService.deleteById(data[1].toLong())
                 labWorkService.flush()
 
                 updateLabsList(message)
             }
 
             "edit" -> {
-                val labId = split[1].toLong()
+                val labId = data[1].toLong()
                 val editMessage = EditMessageText.builder()
                     .edit(message)
                     .text("Введите новое название лабы (ответом на это сообщение):")
                     .replyMarkup(
                         InlineKeyboardMarkup.builder().keyboardRow(
-                            inlineRowButton(Emoji.BACK, addPrefix("select $labId")),
+                            inlineRowButton(Emoji.BACK, encode("select", labId)),
                         ).build()
                     )
                     .build()
 
-                editLabNameState.setChatData(chat.id, labId.toString())
+                editLabNameState.setChatData(chat.id, labId)
                 stateManager.setHandler(chat.id, editLabNameState)
 
                 telegram.execute(editMessage)
@@ -242,7 +244,7 @@ class ListLabsCommand(
             }
 
             "lab_page" -> {
-                val page = split[1].toInt()
+                val page = data[1].toInt()
                 val labs = groupService.getOrCreateByChatId(chat.id).labs
 
                 val editMessage = EditMessageText.builder()
@@ -253,7 +255,7 @@ class ListLabsCommand(
             }
 
             "add_to_queue" -> {
-                val lab = labWorkService.findById(split[1].toLong())
+                val lab = labWorkService.findById(data[1].toLong())
                 val queue = lab!!.queues[0]
                 val user = userService.getOrCreateByTelegramId(from.id, from.userName)
 
@@ -277,15 +279,15 @@ class ListLabsCommand(
             }
 
             "remove_from_queue" -> {
-                val lab = labWorkService.findById(split[1].toLong())
+                val lab = labWorkService.findById(data[1].toLong())
                 val queue = lab!!.queues[0]
                 val user = userService.getOrCreateByTelegramId(from.id, from.userName)
 
             }
 
             "add_to_queue_attempt" -> {
-                val lab = labWorkService.findById(split[1].toLong())
-                val attempt = split[2].toInt()
+                val lab = labWorkService.findById(data[1].toLong())
+                val attempt = data[2].toInt()
                 val user = userService.getOrCreateByTelegramId(from.id, from.userName)
                 val queue = lab!!.queues[0]
 
@@ -294,9 +296,7 @@ class ListLabsCommand(
                 if (queue.entries.filter { entry -> !entry.done }.any { it.user == user }) {
                     editMessage.text("Вы уже присутствуете в очереди")
                 } else {
-                    editMessage.text("Вы добавлены в очередь")
-
-                    val entry = queueService.save(
+                    queueService.save(
                         QueueEntry(
                             user = user,
                             queue = queue,
@@ -304,6 +304,8 @@ class ListLabsCommand(
                             addedAt = OffsetDateTime.now()
                         )
                     )
+
+                    editMessage.text("Вы добавлены в очередь")
                 }
 
                 telegram.execute(editMessage.build())

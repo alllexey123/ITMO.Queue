@@ -31,10 +31,10 @@ class EnterLabNameState(
         val chat = message.chat
         val labName = message.text.trim()
         val group = groupService.getOrCreateByChatId(chat.id)
-        val data = getChatData(chat.id)?.split(" ")
+        val data = getChatData(chat.id)
 
-        if (data == null) return true
-        val subject = subjectService.findById(data[1].toLong())
+        if (data?.getOrNull(0) == null) return true
+        val subject = subjectService.findById(data[0].toLong())
         if (subject == null) return true
 
         val sendMessage = SendMessage.builder()

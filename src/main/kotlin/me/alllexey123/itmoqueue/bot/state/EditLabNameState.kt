@@ -24,7 +24,7 @@ class EditLabNameState(
         val labName = message.text.trim()
         val group = groupService.getOrCreateByChatId(chat.id)
 
-        val labId = getChatData(chat.id)?.toLong()
+        val labId = getChatData(chat.id)?.getOrNull(0)?.toLong()
 
         if (labId == null) return true
         val lab = labWorkService.findById(labId)
