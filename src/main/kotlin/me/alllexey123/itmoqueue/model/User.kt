@@ -13,12 +13,12 @@ class User(
     var nickname: String?,
 
     @Column(unique = true, nullable = false)
-    var telegramId: Long,
+    val telegramId: Long,
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "user", orphanRemoval = true)
-    var memberships: MutableSet<Membership> = mutableSetOf(),
+    val memberships: MutableSet<Membership> = mutableSetOf(),
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "user", orphanRemoval = true)
-    var queueEntries: MutableSet<QueueEntry> = mutableSetOf(),
+    val queueEntries: MutableSet<QueueEntry> = mutableSetOf(),
 
     )

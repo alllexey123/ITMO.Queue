@@ -21,5 +21,5 @@ class Subject (
     val group: Group,
 
     @OneToMany(mappedBy = "subject", cascade = [(CascadeType.ALL)], fetch = FetchType.LAZY, orphanRemoval = true)
-    var labWorks: MutableList<LabWork> = mutableListOf(),
+    val labWorks: MutableList<LabWork> = mutableListOf(),
 )

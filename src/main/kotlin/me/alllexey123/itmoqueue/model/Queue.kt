@@ -10,14 +10,14 @@ class Queue (
     var id: Long? = null,
 
     @OneToMany(mappedBy = "queue", cascade = [(CascadeType.ALL)], orphanRemoval = true)
-    var entries: MutableList<QueueEntry> = mutableListOf(),
+    val entries: MutableList<QueueEntry> = mutableListOf(),
 
     @ManyToOne
-    var labWork: LabWork,
+    val labWork: LabWork,
 
     @Enumerated(EnumType.STRING)
     val type: QueueType,
 
     @ManyToOne
-    var teacher: Teacher?,
+    val teacher: Teacher?,
 )

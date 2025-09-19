@@ -17,7 +17,7 @@ class QueueEntry (
     @ManyToOne(fetch = FetchType.LAZY)
     val queue: Queue,
 
-    val done: Boolean = false,
+    var done: Boolean = false,
 
     val attemptNumber: Int,
 

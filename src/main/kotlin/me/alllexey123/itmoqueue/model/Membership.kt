@@ -1,7 +1,6 @@
 package me.alllexey123.itmoqueue.model
 
 import jakarta.persistence.*
-import java.time.OffsetDateTime
 
 @Entity
 @Table(name = "memberships")
@@ -13,23 +12,19 @@ class Membership(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    var user: User,
+    val user: User,
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
-    var group: Group,
-
-    // if type == Pending, then this is the time of the request
-    val since: OffsetDateTime,
-
+    val group: Group,
+    
     @Enumerated(EnumType.STRING)
     val type: Type,
 ) {
 
     enum class Type {
-        CREATOR,
-        MEMBER,
-        PENDING
+        ADMIN,
+        MEMBER
     }
 
 }

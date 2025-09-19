@@ -4,7 +4,7 @@ import jakarta.persistence.*
 
 @Entity
 @Table(name = "groups")
-class Group (
+class Group(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -13,17 +13,17 @@ class Group (
     var name: String?,
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
-    var members: MutableSet<Membership> = mutableSetOf(),
+    val members: MutableSet<User> = mutableSetOf(),
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
-    var labs: MutableList<LabWork> = mutableListOf(),
+    val labs: MutableList<LabWork> = mutableListOf(),
 
     @Column(unique = true, nullable = false)
-    var chatId: Long,
+    val chatId: Long,
 
     @OneToOne(fetch = FetchType.LAZY)
     var addedBy: User? = null,
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
-    var subjects: MutableList<Subject> = mutableListOf(),
+    val subjects: MutableList<Subject> = mutableListOf(),
 )

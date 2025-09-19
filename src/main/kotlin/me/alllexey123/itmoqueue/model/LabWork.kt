@@ -14,11 +14,11 @@ class LabWork(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "group_id")
-    var group: Group,
+    val group: Group,
 
     @OneToMany(mappedBy = "labWork", cascade = [(CascadeType.ALL)], orphanRemoval = true)
-    var queues: MutableList<Queue> = mutableListOf(),
+    val queues: MutableList<Queue> = mutableListOf(),
 
     @ManyToOne
-    var subject: Subject?,
+    val subject: Subject,
 )
