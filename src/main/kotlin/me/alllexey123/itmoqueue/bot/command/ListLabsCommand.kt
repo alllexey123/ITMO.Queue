@@ -46,8 +46,7 @@ class ListLabsCommand(
     private val editLabNameState: EditLabNameState,
     private val queueService: QueueService,
     private val userService: UserService
-) :
-    CommandHandler, CallbackHandler {
+) : CommandHandler, CallbackHandler {
 
     override fun handle(message: Message) {
         val chat = message.chat
