@@ -1,6 +1,7 @@
 package me.alllexey123.itmoqueue.bot.state
 
 import me.alllexey123.itmoqueue.bot.Scope
+import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
 import me.alllexey123.itmoqueue.bot.extensions.replyTo
 import me.alllexey123.itmoqueue.services.GroupService
@@ -22,17 +23,21 @@ class EditSubjectState(
         val chat = message.chat
         val subjectName = message.text.trim()
         val group = groupService.getOrCreateByChatId(chat.id)
-        val sendMessage = SendMessage.builder()
-            .replyTo(message)
-
         val subjectId = getChatData(chat.id)?.toLong()
 
         if (subjectId == null) return true
         val subject = subjectService.findById(subjectId)
         if (subject == null) return true
 
-        val check = validators.checkSubjectName(subjectName, sendMessage, group)
-        if (!check) return false
+        val sendMessage = SendMessage.builder()
+            .replyTo(message)
+
+        val check = validators.checkSubjectName(subjectName, group)
+        if (check is ValidationResult.Failure) {
+            sendMessage.text(check.msg)
+            telegramService.client.execute(sendMessage.build())
+            return false
+        }
 
         val prev = subject.name
         subject.name = subjectName

@@ -1,6 +1,7 @@
 package me.alllexey123.itmoqueue.bot.state
 
 import me.alllexey123.itmoqueue.bot.Scope
+import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
 import me.alllexey123.itmoqueue.bot.extensions.replyTo
 import me.alllexey123.itmoqueue.model.LabWork
@@ -39,8 +40,12 @@ class EnterLabNameState(
         val sendMessage = SendMessage.builder()
             .replyTo(message)
 
-        val check = validators.checkLabName(labName, sendMessage, group)
-        if (!check) return false
+        val check = validators.checkLabName(labName, group)
+        if (check is ValidationResult.Failure){
+            sendMessage.text(check.msg)
+            telegramService.client.execute(sendMessage.build())
+            return false
+        }
 
         val lab = labWorkService.save(
             LabWork(

@@ -1,54 +1,41 @@
 package me.alllexey123.itmoqueue.bot
 
-import me.alllexey123.itmoqueue.bot.extensions.withForceReply
 import me.alllexey123.itmoqueue.model.Group
-import me.alllexey123.itmoqueue.services.TelegramService
 import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 
 @Component
-class Validators(private val telegramService: TelegramService) {
+class Validators {
 
     fun checkSubjectName(
         subjectName: String,
-        sendMessage: SendMessage.SendMessageBuilder<*, *>,
         group: Group
-    ): Boolean {
+    ): ValidationResult {
 
         if (subjectName.length > 20) {
-            val msg = sendMessage.withForceReply("Название предмета длиннее 20 символов, попробуйте снова")
-            telegramService.client.execute(msg)
-            return false
+            return ValidationResult.Failure("Название предмета длиннее 20 символов, попробуйте снова")
         }
 
         if (group.subjects.any { subject -> subject.name == subjectName }) {
-            val msg = sendMessage.withForceReply("Предмет с таким названием уже добавлен, попробуйте снова")
-            telegramService.client.execute(msg)
-            return false
+            ValidationResult.Failure("Предмет с таким названием уже добавлен, попробуйте снова")
         }
 
-        return true
+        return ValidationResult.Success
     }
 
     fun checkLabName(
         labName: String,
-        sendMessage: SendMessage.SendMessageBuilder<*, *>,
         group: Group
-    ): Boolean {
+    ): ValidationResult {
 
         if (labName.length > 20) {
-            val msg = sendMessage.withForceReply("Название лабы длиннее 20 символов, попробуйте снова")
-            telegramService.client.execute(msg)
-            return false
+            return ValidationResult.Failure("Название лабы длиннее 20 символов, попробуйте снова")
         }
 
         if (group.labs.any { work -> work.name == labName }) {
-            val msg = sendMessage.withForceReply("Лаба с таким названием уже добавлена, попробуйте снова")
-            telegramService.client.execute(msg)
-            return false
+            return ValidationResult.Failure("Лаба с таким названием уже добавлена, попробуйте снова")
         }
 
-        return true
+        return ValidationResult.Success
     }
 
 }

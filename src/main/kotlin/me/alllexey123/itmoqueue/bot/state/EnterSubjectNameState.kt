@@ -1,6 +1,7 @@
 package me.alllexey123.itmoqueue.bot.state
 
 import me.alllexey123.itmoqueue.bot.Scope
+import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
 import me.alllexey123.itmoqueue.bot.extensions.replyTo
 import me.alllexey123.itmoqueue.model.Subject
@@ -27,8 +28,12 @@ class EnterSubjectNameState(
         val sendMessage = SendMessage.builder()
             .replyTo(message)
 
-        val check = validators.checkSubjectName(subjectName, sendMessage, group)
-        if (!check) return false
+        val check = validators.checkSubjectName(subjectName, group)
+        if (check is ValidationResult.Failure) {
+            sendMessage.text(check.msg)
+            telegramService.client.execute(sendMessage.build())
+            return false
+        }
 
         subjectService.save(
             Subject(

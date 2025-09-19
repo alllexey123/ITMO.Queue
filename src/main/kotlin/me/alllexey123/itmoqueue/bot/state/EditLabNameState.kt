@@ -1,6 +1,7 @@
 package me.alllexey123.itmoqueue.bot.state
 
 import me.alllexey123.itmoqueue.bot.Scope
+import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
 import me.alllexey123.itmoqueue.bot.extensions.replyTo
 import me.alllexey123.itmoqueue.services.GroupService
@@ -22,8 +23,6 @@ class EditLabNameState(
         val chat = message.chat
         val labName = message.text.trim()
         val group = groupService.getOrCreateByChatId(chat.id)
-        val sendMessage = SendMessage.builder()
-            .replyTo(message)
 
         val labId = getChatData(chat.id)?.toLong()
 
@@ -31,8 +30,14 @@ class EditLabNameState(
         val lab = labWorkService.findById(labId)
         if (lab == null) return true
 
-        val check = validators.checkLabName(labName, sendMessage, group)
-        if (!check) return false
+        val check = validators.checkLabName(labName, group)
+        val sendMessage = SendMessage.builder()
+            .replyTo(message)
+        if (check is ValidationResult.Failure) {
+            sendMessage.text(check.msg)
+            telegramService.client.execute(sendMessage.build())
+            return false
+        }
 
         val prev = lab.name
         lab.name = labName
