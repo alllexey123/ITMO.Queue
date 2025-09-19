@@ -21,4 +21,8 @@ class User(
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "user", orphanRemoval = true)
     val queueEntries: MutableSet<QueueEntry> = mutableSetOf(),
 
-    )
+    ) {
+    fun mention(): String {
+        return "[${nickname}](tg://user?id=${telegramId})"
+    }
+}

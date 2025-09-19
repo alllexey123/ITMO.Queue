@@ -3,10 +3,12 @@ package me.alllexey123.itmoqueue.services
 import me.alllexey123.itmoqueue.model.Queue
 import me.alllexey123.itmoqueue.model.QueueEntry
 import me.alllexey123.itmoqueue.model.QueueType
+import me.alllexey123.itmoqueue.model.User
 import me.alllexey123.itmoqueue.repositories.QueueEntryRepository
 import me.alllexey123.itmoqueue.repositories.QueueRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class QueueService(
@@ -55,5 +57,18 @@ class QueueService(
             }
         }
         return queue.entries
+    }
+
+
+    @Transactional
+    fun removeUserFromQueue(user: User, queue: Queue): Boolean {
+        val entryExists = queue.entries.any { !it.done && it.user == user }
+
+        if (!entryExists) {
+            return false
+        }
+
+        queueEntryRepository.deleteByUserAndQueue(user, queue)
+        return true
     }
 }
