@@ -24,11 +24,11 @@ class UserService (private val userRepository: UserRepository) {
         return userRepository.save(user)
     }
 
-    fun getOrCreateByTelegramId(telegramId: Long): User {
+    fun getOrCreateByTelegramId(telegramId: Long, telegramName: String): User {
         val user = findByTelegramId(telegramId)
         if (user == null) {
             return save(User(
-                nickname = null,
+                nickname = telegramName,
                 telegramId = telegramId
             ))
         }

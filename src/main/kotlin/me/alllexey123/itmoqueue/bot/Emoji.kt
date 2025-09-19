@@ -13,4 +13,10 @@ object Emoji {
     const val CANCEL = "❌"
 
     const val EDIT = "✏"
+
+    const val MINUS = "➖"
+
+    const val PLUS = "➕"
+
+    const val REFRESH = "\uD83D\uDD04"
 }

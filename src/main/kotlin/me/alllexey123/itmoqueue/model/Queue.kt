@@ -15,6 +15,9 @@ class Queue (
     @ManyToOne
     var labWork: LabWork,
 
+    @Enumerated(EnumType.STRING)
+    val type: QueueType,
+
     @ManyToOne
     var teacher: Teacher?,
 )

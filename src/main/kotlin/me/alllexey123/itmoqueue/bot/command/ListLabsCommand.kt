@@ -10,19 +10,38 @@ import me.alllexey123.itmoqueue.bot.extensions.withInlineKeyboard
 import me.alllexey123.itmoqueue.bot.state.EditLabNameState
 import me.alllexey123.itmoqueue.bot.state.StateManager
 import me.alllexey123.itmoqueue.model.LabWork
-import me.alllexey123.itmoqueue.services.GroupService
-import me.alllexey123.itmoqueue.services.LabWorkService
-import me.alllexey123.itmoqueue.services.TelegramService
+import me.alllexey123.itmoqueue.model.Queue
+import me.alllexey123.itmoqueue.model.QueueEntry
+import me.alllexey123.itmoqueue.model.QueueType
+import me.alllexey123.itmoqueue.services.*
+import org.hibernate.query.sqm.TemporalUnit
 import org.springframework.stereotype.Component
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.ParseMode
+import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethod
+import org.telegram.telegrambots.meta.api.methods.send.SendChatAction
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.send.SendVenue
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery
+import org.telegram.telegrambots.meta.api.objects.ReplyParameters
 import org.telegram.telegrambots.meta.api.objects.message.MaybeInaccessibleMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
+import java.io.Serializable
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.OffsetTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
+import java.util.stream.IntStream
 
 @Component
 class ListLabsCommand(
@@ -30,7 +49,9 @@ class ListLabsCommand(
     private val telegramService: TelegramService,
     private val stateManager: StateManager,
     private val labWorkService: LabWorkService,
-    private val editLabNameState: EditLabNameState
+    private val editLabNameState: EditLabNameState,
+    private val queueService: QueueService,
+    private val userService: UserService
 ) :
     CommandHandler, CallbackHandler {
 
@@ -96,9 +117,39 @@ class ListLabsCommand(
             return "Лаба не найдена"
         }
 
+        var queue = lab.queues.getOrNull(0)
+
+        if (queue == null) {
+            queue = queueService.save(
+                Queue(
+                    labWork = lab,
+                    type = QueueType.FIRST_PRIORITY,
+                    teacher = null
+                )
+            )
+
+            queueService.save(queue)
+        }
+
+        val validEntries = queueService.sortedEntries(queue).filter { entry ->
+            !entry.done
+        }
+
         return buildString {
-            appendLine("Лаба <strong>${lab.name}</strong>")
-            appendLine("Предмет: <strong>${lab.subject?.name ?: "неизвестный"}</strong>")
+            appendLine("Лаба *${lab.name}*")
+            appendLine("Предмет: *${lab.subject?.name ?: "неизвестный"}*")
+            val dtf = DateTimeFormatter.ofPattern("HH:mm:ss")
+            appendLine("Обновлено: " + dtf.format(LocalTime.now()))
+            appendLine()
+            if (validEntries.isEmpty()) {
+                appendLine("Очередь пуста")
+            } else {
+                appendLine("Очередь:")
+                validEntries.forEachIndexed { i, entry ->
+                    val user = entry.user
+                    appendLine("${i + 1}. [${user.nickname}](tg://user?id=${user.id}) ")
+                }
+            }
         }
     }
 
@@ -111,28 +162,65 @@ class ListLabsCommand(
         rows.add(
             InlineKeyboardRow(
                 listOf(
+                    inlineButton(Emoji.PLUS, addPrefix("add_to_queue ${lab.id}")),
+                    inlineButton(Emoji.MINUS, addPrefix("remove_from_queue ${lab.id}")),
+                    inlineButton(Emoji.REFRESH, addPrefix("select ${lab.id} ${LocalDateTime.now()}")),
+                )
+            )
+        )
+        rows.add(
+            InlineKeyboardRow(
+                listOf(
                     inlineButton(Emoji.BACK, addPrefix("main")),
                     inlineButton(Emoji.EDIT, addPrefix("edit ${lab.id}")),
                     inlineButton(Emoji.DELETE, addPrefix("delete ${lab.id}"))
                 )
             )
         )
+
         return InlineKeyboardMarkup.builder().keyboard(rows).build()
+    }
+
+    fun getAttemptKeyboard(labId: Long?): InlineKeyboardMarkup {
+        val count = 4;
+        return InlineKeyboardMarkup.builder().keyboardRow(
+            InlineKeyboardRow(
+                IntStream.range(1, count + 1)
+                    .mapToObj { i ->
+                        inlineButton(if (i == count) "$i+" else "$i", addPrefix("add_to_queue_attempt $labId $i"))
+                    }.toList()
+            )
+        ).build()
     }
 
     override fun handle(callbackQuery: CallbackQuery) {
         val split = removePrefix(callbackQuery.data).split(" ")
         val message = callbackQuery.message
         val chat = message.chat
+        val from = callbackQuery.from
         when (split[0]) {
             "select" -> {
                 val lab = labWorkService.findById(split[1].toLong())
-                val editMessage = EditMessageText.builder()
-                    .edit(message)
-                    .parseMode(ParseMode.HTML)
-                    .withInlineKeyboard(getLabText(lab), getLabKeyboard(lab))
+                val lastUpdate = split.getOrNull(2)?.let { str ->
+                    return@let LocalDateTime.parse(str)
+                }
+                val from = LocalDateTime.now().minusSeconds(15)
+                if (lastUpdate != null && lastUpdate > from) {
+                    val sendToast = AnswerCallbackQuery.builder()
+                        .callbackQueryId(callbackQuery.id)
+                        .text("Не так быстро! Обновлять можно раз в 15 секунд.")
+                        .cacheTime(from.until(from, ChronoUnit.SECONDS).toInt())
+                        .build()
 
-                telegramService.client.execute(editMessage)
+                    telegramService.client.execute(sendToast)
+                } else {
+                    val editMessage = EditMessageText.builder()
+                        .edit(message)
+                        .parseMode(ParseMode.MARKDOWN)
+                        .withInlineKeyboard(getLabText(lab), getLabKeyboard(lab))
+
+                    telegramService.client.execute(editMessage)
+                }
             }
 
             "delete" -> {
@@ -147,9 +235,11 @@ class ListLabsCommand(
                 val editMessage = EditMessageText.builder()
                     .edit(message)
                     .text("Введите новое название лабы (ответом на это сообщение):")
-                    .replyMarkup(InlineKeyboardMarkup.builder().keyboardRow(
-                        inlineRowButton(Emoji.BACK, addPrefix("select $labId")),
-                    ).build())
+                    .replyMarkup(
+                        InlineKeyboardMarkup.builder().keyboardRow(
+                            inlineRowButton(Emoji.BACK, addPrefix("select $labId")),
+                        ).build()
+                    )
                     .build()
 
                 editLabNameState.setChatData(chat.id, labId.toString())
@@ -171,6 +261,63 @@ class ListLabsCommand(
                     .withInlineKeyboard(getListMessageText(labs, page), getListKeyboard(labs, page = page))
 
                 telegramService.client.execute(editMessage)
+            }
+
+            "add_to_queue" -> {
+                val lab = labWorkService.findById(split[1].toLong())
+                val queue = lab!!.queues[0]
+                val user = userService.getOrCreateByTelegramId(from.id, from.userName)
+
+                if (queue.entries.filter { entry -> !entry.done }.any { it.user == user }) {
+                    val action = AnswerCallbackQuery.builder()
+                        .text("Вы уже присутствуете в очереди!")
+                        .cacheTime(10)
+                        .callbackQueryId(callbackQuery.id)
+                        .build()
+
+                    telegramService.client.execute(action)
+                } else {
+                    val action = SendMessage.builder()
+                        .chatId(chat.id)
+                        .text("Какая это попытка?")
+                        .replyMarkup(getAttemptKeyboard(lab.id))
+                        .build()
+
+                    telegramService.client.execute(action)
+                }
+            }
+
+            "remove_from_queue" -> {
+                val lab = labWorkService.findById(split[1].toLong())
+                val queue = lab!!.queues[0]
+                val user = userService.getOrCreateByTelegramId(from.id, from.userName)
+
+            }
+
+            "add_to_queue_attempt" -> {
+                val lab = labWorkService.findById(split[1].toLong())
+                val attempt = split[2].toInt()
+                val user = userService.getOrCreateByTelegramId(from.id, from.userName)
+                val queue = lab!!.queues[0]
+
+                val editMessage = EditMessageText.builder()
+                    .edit(message)
+                if (queue.entries.filter { entry -> !entry.done }.any { it.user == user }) {
+                    editMessage.text("Вы уже присутствуете в очереди")
+                } else {
+                    editMessage.text("Вы добавлены в очередь")
+
+                    val entry = queueService.save(
+                        QueueEntry(
+                            user = user,
+                            queue = queue,
+                            attemptNumber = attempt,
+                            addedAt = OffsetDateTime.now()
+                        )
+                    )
+                }
+
+                telegramService.client.execute(editMessage.build())
             }
         }
     }

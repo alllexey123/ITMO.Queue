@@ -39,14 +39,14 @@ class MyChatMemberHandler(
 
     fun onChatFirstJoin(update: ChatMemberUpdated) {
         val addedById = update.from.id
-        val addedByUser = userService.getOrCreateByTelegramId(addedById)
+        val addedByUser = userService.getOrCreateByTelegramId(addedById, update.from.userName)
         val group = groupService.getOrCreateByChatId(update.chat.id)
         group.addedBy = addedByUser
     }
 
     fun onChatReturn(update: ChatMemberUpdated, group: Group) {
         val addedById = update.from.id
-        val addedByUser = userService.getOrCreateByTelegramId(addedById)
+        val addedByUser = userService.getOrCreateByTelegramId(addedById, update.from.userName)
         group.addedBy = addedByUser
     }
 }

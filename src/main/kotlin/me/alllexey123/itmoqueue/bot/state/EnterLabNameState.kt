@@ -4,8 +4,11 @@ import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.Validators
 import me.alllexey123.itmoqueue.bot.extensions.replyTo
 import me.alllexey123.itmoqueue.model.LabWork
+import me.alllexey123.itmoqueue.model.Queue
+import me.alllexey123.itmoqueue.model.QueueType
 import me.alllexey123.itmoqueue.services.GroupService
 import me.alllexey123.itmoqueue.services.LabWorkService
+import me.alllexey123.itmoqueue.services.QueueService
 import me.alllexey123.itmoqueue.services.SubjectService
 import me.alllexey123.itmoqueue.services.TelegramService
 import org.springframework.stereotype.Component
@@ -18,7 +21,8 @@ class EnterLabNameState(
     private val telegramService: TelegramService,
     private val subjectService: SubjectService,
     private val validators: Validators,
-    private val labWorkService: LabWorkService
+    private val labWorkService: LabWorkService,
+    private val queueService: QueueService
 ) : StateHandler() {
 
     // data in format "subject [subjectId]"
@@ -38,13 +42,22 @@ class EnterLabNameState(
         val check = validators.checkLabName(labName, sendMessage, group)
         if (!check) return false
 
-        labWorkService.save(
+        val lab = labWorkService.save(
             LabWork(
                 name = labName,
                 group = group,
                 subject = subject
             )
         )
+
+        val queue = Queue(
+            labWork = lab,
+            type = QueueType.FIRST_PRIORITY,
+            teacher = null
+        )
+
+        labWorkService.save(lab)
+        queueService.save(queue)
 
         sendMessage.text(
             """
