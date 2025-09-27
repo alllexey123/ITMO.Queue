@@ -1,16 +1,25 @@
 package me.alllexey123.itmoqueue.bot
 
 import jakarta.transaction.Transactional
-import me.alllexey123.itmoqueue.model.Group
-import me.alllexey123.itmoqueue.services.GroupService
-import me.alllexey123.itmoqueue.services.UserService
+import me.alllexey123.itmoqueue.bot.command.NewLabCommand
+import me.alllexey123.itmoqueue.bot.command.NewSubjectCommand
+import me.alllexey123.itmoqueue.model.Membership
+import me.alllexey123.itmoqueue.repositories.MembershipRepository
+import me.alllexey123.itmoqueue.services.*
 import org.springframework.stereotype.Component
+import org.telegram.telegrambots.meta.api.methods.ParseMode
+import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMemberUpdated
 
 @Component
 class MyChatMemberHandler(
     private val groupService: GroupService,
-    private val userService: UserService
+    private val userService: UserService,
+    private val contextService: ContextService,
+    private val telegram: Telegram,
+    private val membershipRepository: MembershipRepository,
+    private val membershipService: MembershipService
 ) {
 
 
@@ -29,24 +38,31 @@ class MyChatMemberHandler(
     }
 
     fun onJoin(update: ChatMemberUpdated) {
-        val group = groupService.findByChatId(update.chat.id)
-        if (group == null) {
-            onChatFirstJoin(update)
-        } else {
-            onChatReturn(update, group)
+        val chatId = update.chat.id
+        val from = update.from
+        val membership = contextService.getMembership(chatId, from.id, from.userName)
+        membershipService.resetMembershipTypes(membership.group)
+        membership.type = Membership.Type.ADMIN
+        val admins = telegram.execute(GetChatAdministrators.builder().chatId(chatId).build())
+        admins.forEach { admin ->
+            contextService.getMembership(chatId, admin.user.id, admin.user.userName).type = Membership.Type.ADMIN
         }
+        val sendMessage = SendMessage.builder()
+            .chatId(chatId)
+            .parseMode(ParseMode.MARKDOWN)
+            .text("""
+                Привет 🙋
+                Я - бот для создания очередей на сдачу лабораторных работ в ИТМО.
+                Для начала основные моменты:
+                 • Некоторые команды доступны только *текущим* админам и участнику, который меня добавил.
+                 • Я не вижу все сообщения (в целях вашей же анонимности), поэтому при настройке иногда надо отвечать на моё сообщение напрямую (например, при выборе названия лабы).
+                 • Бот в ранней бете (почему вы это вообще читаете?)
+                 
+                Для начала напишите /${NewSubjectCommand.NAME} и /${NewLabCommand.NAME}
+            """.trimIndent())
+            .build()
+
+        telegram.execute(sendMessage)
     }
 
-    fun onChatFirstJoin(update: ChatMemberUpdated) {
-        val addedById = update.from.id
-        val addedByUser = userService.getOrCreateByTelegramId(addedById, update.from.userName)
-        val group = groupService.getOrCreateByChatId(update.chat.id)
-        group.addedBy = addedByUser
-    }
-
-    fun onChatReturn(update: ChatMemberUpdated, group: Group) {
-        val addedById = update.from.id
-        val addedByUser = userService.getOrCreateByTelegramId(addedById, update.from.userName)
-        group.addedBy = addedByUser
-    }
 }

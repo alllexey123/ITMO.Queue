@@ -17,6 +17,7 @@ class EditSubjectState(
 ) : StateHandler() {
 
     override fun handle(context: MessageContext): Boolean {
+        if (!context.requireAdmin(telegram)) return false
         val subjectName = context.text.trim()
         val group = context.group!!
         val subjectId = getChatData(context.chatId)?.getOrNull(0)?.toLong()

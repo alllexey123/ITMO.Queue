@@ -19,7 +19,7 @@ class Membership(
     val group: Group,
     
     @Enumerated(EnumType.STRING)
-    val type: Type,
+    var type: Type,
 ) {
 
     enum class Type {

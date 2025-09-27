@@ -17,6 +17,7 @@ class EditLabNameState(
 ) : StateHandler() {
 
     override fun handle(context: MessageContext): Boolean {
+        if (!context.requireAdmin(telegram)) return false
         val labName = context.text.trim()
         val group = context.group!!
 

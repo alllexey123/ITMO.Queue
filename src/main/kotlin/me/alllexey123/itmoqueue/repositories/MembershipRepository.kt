@@ -10,5 +10,4 @@ interface MembershipRepository : JpaRepository<Membership, Long> {
     fun findMembershipByGroupAndUser(group: Group, user: User): Membership?
 
     fun findMembershipByGroupChatIdAndUserTelegramId(chatId: Long, telegramId: Long): Membership?
-
 }

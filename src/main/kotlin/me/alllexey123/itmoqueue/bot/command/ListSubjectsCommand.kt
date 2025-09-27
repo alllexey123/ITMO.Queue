@@ -120,12 +120,13 @@ class ListSubjectsCommand(
             }
 
             "delete" -> {
+                if (!context.requireAdmin(telegram)) return
                 subjectService.deleteById(context.asLong(1))
-
                 updateSubjectList(context)
             }
 
             "edit" -> {
+                if (!context.requireAdmin(telegram)) return
                 val subjectId = context.asLong(1)
                 val editMessage = EditMessageText.builder()
                     .edit(context.message)

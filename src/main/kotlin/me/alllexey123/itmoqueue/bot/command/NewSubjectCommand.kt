@@ -16,6 +16,7 @@ class NewSubjectCommand(
 ) : CommandHandler {
 
     override fun handle(context: MessageContext) {
+        if (!context.requireAdmin(telegram)) return
         val messageBuilder = context.sendReply()
             .withForceReply("Введите новое название предмета (отмена - /cancel):")
 

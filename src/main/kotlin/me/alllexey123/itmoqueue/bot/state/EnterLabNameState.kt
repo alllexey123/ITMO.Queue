@@ -22,6 +22,7 @@ class EnterLabNameState(
 
     // data in format "subject [subjectId]"
     override fun handle(context: MessageContext): Boolean {
+        if (!context.requireAdmin(telegram)) return false
         val labName = context.text.trim()
         val group = context.group!!
         val subjectId = getChatData(context.chatId)?.getOrNull(0)?.toLong()

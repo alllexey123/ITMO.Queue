@@ -24,7 +24,7 @@ class TelegramBot(
     override fun consume(update: Update?) {
         if (update == null) return
 
-        if (update.hasMessage()) {
+        if (update.hasMessage() && update.message.hasText()) {
             val message = update.message
             if (message.isCommand) {
                 commandManager.handleCommand(message)

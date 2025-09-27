@@ -20,4 +20,8 @@ class MembershipService (private val membershipRepository: MembershipRepository)
     fun findByChatIdAndUserId(chatId: Long, userId: Long): Membership? {
         return membershipRepository.findMembershipByGroupChatIdAndUserTelegramId(chatId, userId)
     }
+
+    fun resetMembershipTypes(group: Group) {
+        group.members.forEach { membership -> membership.type = Membership.Type.MEMBER }
+    }
 }

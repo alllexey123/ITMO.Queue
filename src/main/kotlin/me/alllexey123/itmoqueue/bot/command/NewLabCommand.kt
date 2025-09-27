@@ -25,6 +25,7 @@ class NewLabCommand(
     CommandHandler, CallbackHandler {
 
     override fun handle(context: MessageContext) {
+        if (!context.requireAdmin(telegram)) return
         val group = context.group!!
         val send = context.sendReply()
 

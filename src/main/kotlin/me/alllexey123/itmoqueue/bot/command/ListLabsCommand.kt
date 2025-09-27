@@ -224,6 +224,7 @@ class ListLabsCommand(
     }
 
     fun handleLabDataPinQuery(context: CallbackContext) {
+        if (!context.requireAdmin(telegram)) return
         val lab = labWorkService.findById(context.asLong(1))
         editLabDataMessage(context.chatId, context.messageId, lab, true)
     }
@@ -358,6 +359,7 @@ class ListLabsCommand(
     }
 
     fun handleLabEditQuery(context: CallbackContext) {
+        if (!context.requireAdmin(telegram)) return
         val labId = context.asLong(1)
         val editMessage = EditMessageText.builder()
             .edit(context.message)
@@ -376,6 +378,7 @@ class ListLabsCommand(
     }
 
     fun handleLabDeleteQuery(context: CallbackContext) {
+        if (!context.requireAdmin(telegram)) return
         labWorkService.deleteById(context.asLong(1))
         updateLabsList(context)
     }
@@ -417,7 +420,6 @@ class ListLabsCommand(
 
         telegram.execute(editMessage)
     }
-
 
     override fun prefix() = command()
 
