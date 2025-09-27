@@ -239,6 +239,14 @@ class ListLabsCommand(
                 .build()
             telegram.execute(answer)
         } else {
+//            val entries = queueService.sortedEntries(queue)
+//            var countDone = 0
+//            val doneLimit = 3
+//            for (queueEntry in entries.reversed()) {
+//                if (queueEntry.done) countDone++
+//                if (countDone >= doneLimit && queueEntry.attemptNumber != 1) queueEntry.done = true
+//            }
+
             entry.done = true
             val answer = context.answerBuilder()
                 .text("Ваша позиция отмечена как завершённая")

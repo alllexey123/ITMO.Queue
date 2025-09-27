@@ -60,30 +60,17 @@ class QueueService(
     }
 
     fun sortedEntries(queue: Queue): List<QueueEntry> {
-        when (queue.type) {
-            QueueType.SIMPLE -> {
-                queue.entries.sortBy { lab ->
-                    lab.addedAt
+        return when (queue.type) {
+            QueueType.SIMPLE -> queue.entries.sortedBy { it.addedAt }
+            QueueType.FIRST_PRIORITY -> queue.entries.sortedWith { l1, l2 ->
+                when {
+                    l1.attemptNumber == 1 && l2.attemptNumber != 1 -> -1
+                    l1.attemptNumber != 1 && l2.attemptNumber == 1 -> 1
+                    else -> l1.addedAt.compareTo(l2.addedAt)
                 }
             }
-
-            QueueType.FIRST_PRIORITY -> {
-                queue.entries.sortWith { l1, l2 ->
-                    if (l1.attemptNumber == 1 && l2.attemptNumber == 1) {
-                        l1.addedAt.compareTo(l2.addedAt)
-                    } else {
-                        if (l1.attemptNumber == 1) -1
-                        if (l2.attemptNumber == 1) 1
-                        else l1.addedAt.compareTo(l2.addedAt)
-                    }
-                }
-            }
-
-            QueueType.PRIORITY -> {
-
-            }
+            QueueType.PRIORITY -> queue.entries
         }
-        return queue.entries
     }
 
     @Transactional

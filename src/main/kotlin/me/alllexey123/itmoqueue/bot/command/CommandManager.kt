@@ -18,7 +18,8 @@ class CommandManager(
     private val cancelCommand: CancelCommand,
     private val telegram: Telegram,
     private val listSubjectsCommand: ListSubjectsCommand,
-    private val contextService: ContextService
+    private val contextService: ContextService,
+    private val setNicknameCommand: SetNicknameCommand
 ) {
 
     lateinit var handlers: List<CommandHandler>
@@ -32,6 +33,7 @@ class CommandManager(
             listSubjectsCommand,
             newLabCommand,
             listLabsCommand,
+            setNicknameCommand,
         )
     }
 
