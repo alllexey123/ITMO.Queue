@@ -12,11 +12,15 @@ object Emoji {
 
     const val CANCEL = "❌"
 
+    const val CHECK = "✅"
+
     const val EDIT = "✏"
 
     const val MINUS = "➖"
 
     const val PLUS = "➕"
+
+    const val PIN = "\uD83D\uDCCC"
 
     const val REFRESH = "\uD83D\uDD04"
 }

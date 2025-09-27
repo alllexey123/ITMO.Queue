@@ -18,14 +18,15 @@ import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.ParseMode
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.stream.IntStream
@@ -56,8 +57,8 @@ class ListLabsCommand(
         val pageLabs = labs.drop((page - 1) * perPage).take(perPage)
 
         return buildString {
+            appendLine("Список лаб в этой группе:\n")
             if (pageLabs.isNotEmpty()) {
-                appendLine("Список лаб:\n")
                 pageLabs.forEachIndexed { i, lab ->
                     val labIndex = ((page - 1) * perPage + i + 1).toString()
                     appendLine("${labIndex}. ${lab.name}")
@@ -78,7 +79,7 @@ class ListLabsCommand(
             InlineKeyboardRow(
                 chunk.mapIndexed { j, lab ->
                     val labIndex = ((page - 1) * perPage + i * perRow + j + 1).toString()
-                    inlineButton(labIndex, encode("select", lab.id))
+                    inlineButton(labIndex, encode("select", lab.id, LocalDateTime.MIN, false))
                 }
             )
         }.toMutableList()
@@ -105,9 +106,7 @@ class ListLabsCommand(
 
         val queue = lab.queues.first()
 
-        val validEntries = queueService.sortedEntries(queue).filter { entry ->
-            !entry.done
-        }
+        val entries = queueService.sortedEntries(queue)
 
         return buildString {
             appendLine("Лаба *${lab.name}*")
@@ -115,19 +114,19 @@ class ListLabsCommand(
             val dtf = DateTimeFormatter.ofPattern("HH:mm:ss")
             appendLine("Обновлено: " + dtf.format(LocalTime.now()))
             appendLine()
-            if (validEntries.isEmpty()) {
+            if (entries.isEmpty()) {
                 appendLine("Очередь пуста")
             } else {
                 appendLine("Очередь:")
-                validEntries.forEachIndexed { i, entry ->
+                entries.forEachIndexed { i, entry ->
                     val user = entry.user
-                    appendLine("${i + 1}. \\[${entry.attemptNumber}] ${user.mention()}")
+                    appendLine("`${i + 1}. [${entry.attemptNumber}|${if (entry.done) Emoji.CHECK else Emoji.CANCEL}]` ${user.mention()}")
                 }
             }
         }
     }
 
-    fun getLabKeyboard(lab: LabWork?): InlineKeyboardMarkup {
+    fun getLabKeyboard(lab: LabWork?, pinned: Boolean): InlineKeyboardMarkup {
         if (lab == null) {
             return InlineKeyboardMarkup.builder().build()
         }
@@ -136,32 +135,63 @@ class ListLabsCommand(
         rows.add(
             InlineKeyboardRow(
                 listOf(
-                    inlineButton(Emoji.PLUS, encode("add_to_queue", lab.id)),
-                    inlineButton(Emoji.MINUS, encode("remove_from_queue", lab.id)),
-                    inlineButton(Emoji.REFRESH, encode("select", lab.id, LocalDateTime.now())),
+                    inlineButton(Emoji.PLUS, encode("add_to_queue", lab.id, pinned)),
+                    inlineButton(Emoji.MINUS, encode("remove_from_queue", lab.id, pinned)),
+                    inlineButton(Emoji.REFRESH, encode("select", lab.id, LocalDateTime.now(), pinned)),
                 )
             )
         )
-        rows.add(
-            InlineKeyboardRow(
-                listOf(
-                    inlineButton(Emoji.BACK, encode("main")),
-                    inlineButton(Emoji.EDIT, encode("edit", lab.id)),
-                    inlineButton(Emoji.DELETE, encode("delete", lab.id))
+        if (pinned) {
+            rows.add(
+                InlineKeyboardRow(
+                    listOf(
+                        inlineButton(Emoji.CHECK, encode("mark_done", lab.queues[0].id, true))
+                    )
                 )
             )
-        )
+        } else {
+            rows.add(
+                InlineKeyboardRow(
+                    listOf(
+                        inlineButton(Emoji.BACK, encode("main")),
+                        inlineButton(Emoji.EDIT, encode("edit", lab.id)),
+                        inlineButton(Emoji.DELETE, encode("delete", lab.id))
+                    )
+                )
+            )
+
+            rows.add(
+                InlineKeyboardRow(
+                    listOf(
+                        inlineButton(Emoji.CHECK, encode("mark_done", lab.queues[0].id, false)),
+                        inlineButton(Emoji.PIN, encode("pin_lab_data", lab.id))
+                    )
+                )
+            )
+
+        }
 
         return InlineKeyboardMarkup.builder().keyboard(rows).build()
     }
 
-    fun getAttemptKeyboard(labId: Long?): InlineKeyboardMarkup {
+    fun getAttemptKeyboard(
+        labId: Long?,
+        telegramUserId: Long,
+        mainMessageId: Int,
+        mainMessagePinned: Boolean
+    ): InlineKeyboardMarkup {
         val count = 4
+        val cancelButton =
+            inlineButton(Emoji.CANCEL, encode("add_to_queue_cancel", telegramUserId, System.currentTimeMillis()))
         return InlineKeyboardMarkup.builder().keyboardRow(
             InlineKeyboardRow(
-                IntStream.range(1, count + 1)
+                IntStream.range(1, count + 2)
                     .mapToObj { i ->
-                        inlineButton(if (i == count) "$i+" else "$i", encode("add_to_queue_attempt", labId, i))
+                        if (i == count + 1) return@mapToObj cancelButton
+                        inlineButton(
+                            if (i == count) "$i+" else "$i",
+                            encode("add_to_queue_attempt", labId, i, telegramUserId, mainMessageId, mainMessagePinned)
+                        )
                     }.toList()
             )
         ).build()
@@ -184,16 +214,73 @@ class ListLabsCommand(
             "remove_from_queue" -> handleRemoveFromQueueQuery(context)
 
             "add_to_queue_attempt" -> handleAddToQueueAttemptQuery(context)
+
+            "add_to_queue_cancel" -> handleAddToQueueCancelQuery(context)
+
+            "mark_done" -> handleMarkDoneQuery(context)
+
+            "pin_lab_data" -> handleLabDataPinQuery(context)
+        }
+    }
+
+    fun handleLabDataPinQuery(context: CallbackContext) {
+        val lab = labWorkService.findById(context.asLong(1))
+        editLabDataMessage(context.chatId, context.messageId, lab, true)
+    }
+
+    fun handleMarkDoneQuery(context: CallbackContext) {
+        val queue = queueService.findQueueById(context.asLong(1))
+        val entry = queue?.let { it -> queueService.findEntryByQueueAndUser(context.user, it, false) }
+        val pinned = context.asBoolean(2)
+        if (entry == null) {
+            val answer = context.answerBuilder()
+                .text("У вас нет активных позиций в этой очереди")
+                .build()
+            telegram.execute(answer)
+        } else {
+            entry.done = true
+            val answer = context.answerBuilder()
+                .text("Ваша позиция отмечена как завершённая")
+                .build()
+            telegram.execute(answer)
+
+            val editMessage = EditMessageText.builder()
+                .edit(context.message)
+                .parseMode(ParseMode.MARKDOWN)
+                .withInlineKeyboard(getLabText(queue.labWork), getLabKeyboard(queue.labWork, pinned))
+
+            telegram.execute(editMessage)
+        }
+    }
+
+    fun handleAddToQueueCancelQuery(context: CallbackContext) {
+        val timeoutSeconds = 60 // 1 minute to select
+        val askedUserId = context.asLong(1)
+        val askedAt = Instant.ofEpochMilli(context.asLong(2)).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        val delete = context.deleteBuilder().build()
+        if (java.time.Duration.between(askedAt, LocalDateTime.now()).toSeconds() > timeoutSeconds) {
+            telegram.execute(delete)
+        } else {
+            val answerBuilder = context.answerBuilder()
+            if (askedUserId != context.user.telegramId) {
+                answerBuilder.text("Вы не можете пока удалить это сообщение")
+                telegram.execute(answerBuilder.build())
+            } else {
+                answerBuilder.text("Выбор отменён")
+                telegram.execute(answerBuilder.build())
+                telegram.execute(delete)
+            }
         }
     }
 
     fun handleRemoveFromQueueQuery(context: CallbackContext) {
         val lab = labWorkService.findById(context.asLong(1))
         val queue = lab!!.queues[0]
-
+        val pinned = context.asBoolean(2)
         val answer = AnswerCallbackQuery.builder().callbackQueryId(context.id)
         if (queueService.removeUserFromQueue(context.user, queue)) {
             answer.text("Вы успешно удалены из очереди")
+            editLabDataMessage(context.chatId, context.messageId, lab, pinned)
         } else {
             answer.text("Вас нет в этой очереди")
         }
@@ -204,6 +291,17 @@ class ListLabsCommand(
     fun handleAddToQueueAttemptQuery(context: CallbackContext) {
         val lab = labWorkService.findById(context.asLong(1))
         val attempt = context.asInt(2)
+        val userId = context.asLong(3)
+        val pinned = context.asBoolean(5)
+        if (context.user.telegramId != userId) {
+            val invalidUser = AnswerCallbackQuery.builder()
+                .callbackQueryId(context.id)
+                .text("Эта кнопочка не для вас :)")
+                .build()
+            telegram.execute(invalidUser)
+            return
+        }
+
         val queue = lab!!.queues[0]
 
         val action = AnswerCallbackQuery.builder()
@@ -212,6 +310,8 @@ class ListLabsCommand(
             action.text("Вы уже присутствуете в очереди")
         } else {
             queueService.addToQueue(context.user, queue, attempt)
+
+            editLabDataMessage(context.chatId, context.asInt(4), lab, pinned)
             action.text("Вы добавлены в очередь")
         }
 
@@ -226,21 +326,20 @@ class ListLabsCommand(
     fun handleLabAddToQueueQuery(context: CallbackContext) {
         val lab = labWorkService.findById(context.asLong(1))
         val queue = lab!!.queues[0]
-
+        val pinned = context.asBoolean(2)
         if (queueService.isActiveInQueue(context.user, queue)) {
             val action = AnswerCallbackQuery.builder()
                 .text("Вы уже присутствуете в очереди!")
-                .cacheTime(10)
+                .cacheTime(3)
                 .callbackQueryId(context.id)
                 .build()
 
             telegram.execute(action)
         } else {
-            val action = SendMessage.builder()
-                .chatId(context.chatId)
+            val action = context.send()
                 .parseMode(ParseMode.MARKDOWN)
-                .text("${context.user.mention()}, какая это попытка?")
-                .replyMarkup(getAttemptKeyboard(lab.id))
+                .text("${context.user.mention()}, какая это попытка?\n\n_У вас 1 минута на выбор, потом сообщение могут удалить_")
+                .replyMarkup(getAttemptKeyboard(lab.id, context.user.telegramId, context.messageId, pinned))
                 .build()
 
             telegram.execute(action)
@@ -282,31 +381,23 @@ class ListLabsCommand(
     }
 
     fun handleLabSelectQuery(context: CallbackContext) {
-        fun extracted() {
-            val lab = labWorkService.findById(context.asLong(1))
-            val lastUpdate = context.data.getOrNull(2)?.let { str ->
-                return@let LocalDateTime.parse(str)
-            }
-            val from = LocalDateTime.now().minusSeconds(secondsPerRefresh)
-            if (lastUpdate != null && lastUpdate > from) {
-                val sendToast = AnswerCallbackQuery.builder()
-                    .callbackQueryId(context.id)
-                    .text("Не так быстро! Обновлять можно раз в $secondsPerRefresh секунд.")
-                    .cacheTime(from.until(from, ChronoUnit.SECONDS).toInt())
-                    .build()
-
-                telegram.execute(sendToast)
-            } else {
-                val editMessage = EditMessageText.builder()
-                    .edit(context.message)
-                    .parseMode(ParseMode.MARKDOWN)
-                    .withInlineKeyboard(getLabText(lab), getLabKeyboard(lab))
-
-                telegram.execute(editMessage)
-            }
+        val lab = labWorkService.findById(context.asLong(1))
+        val lastUpdate = context.data.getOrNull(2)?.let { str ->
+            return@let LocalDateTime.parse(str)
         }
+        val pinned = context.asBoolean(3)
+        val from = LocalDateTime.now().minusSeconds(secondsPerRefresh)
+        if (lastUpdate != null && lastUpdate > from) {
+            val sendToast = AnswerCallbackQuery.builder()
+                .callbackQueryId(context.id)
+                .text("Не так быстро! Обновлять можно раз в $secondsPerRefresh секунды.")
+                .cacheTime(from.until(from, ChronoUnit.SECONDS).toInt())
+                .build()
 
-        extracted()
+            telegram.execute(sendToast)
+        } else {
+            editLabDataMessage(context.chatId, context.messageId, lab, pinned)
+        }
     }
 
     fun updateLabsList(context: CallbackContext) {
@@ -314,6 +405,16 @@ class ListLabsCommand(
         val editMessage = EditMessageText.builder()
             .edit(context.message)
             .withInlineKeyboard(getListMessageText(labs), getListKeyboard(labs))
+        telegram.execute(editMessage)
+    }
+
+    fun editLabDataMessage(chatId: Long, messageId: Int, lab: LabWork?, pinned: Boolean) {
+        val editMessage = EditMessageText.builder()
+            .chatId(chatId)
+            .messageId(messageId)
+            .parseMode(ParseMode.MARKDOWN)
+            .withInlineKeyboard(getLabText(lab), getLabKeyboard(lab, pinned))
+
         telegram.execute(editMessage)
     }
 

@@ -34,6 +34,10 @@ class QueueService(
         return queueEntryRepository.findByIdOrNull(id)
     }
 
+    fun findEntryByQueueAndUser(user: User, queue: Queue, done: Boolean): QueueEntry? {
+        return queueEntryRepository.findByQueueAndUserAndDone(queue, user, done)
+    }
+
     fun isActiveInQueue(user: User, queue: Queue): Boolean {
         return queueEntryRepository.findByQueueAndUserAndDone(queue, user, false) != null
     }
@@ -84,13 +88,8 @@ class QueueService(
 
     @Transactional
     fun removeUserFromQueue(user: User, queue: Queue): Boolean {
-        val entryExists = queue.entries.any { !it.done && it.user == user }
-
-        if (!entryExists) {
-            return false
-        }
-
-        queueEntryRepository.deleteByUserAndQueue(user, queue)
-        return true
+        val removed = queue.entries.removeIf { !it.done && it.user == user }
+        return removed
     }
+
 }

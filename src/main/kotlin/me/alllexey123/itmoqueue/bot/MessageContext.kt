@@ -18,7 +18,12 @@ class MessageContext (
     fun send(): SendMessage.SendMessageBuilder<*, *> {
         return SendMessage.builder()
             .chatId(chatId)
-            .messageThreadId(message.messageThreadId)
+            .let { it ->
+                if (message.messageThreadId != null && message.isTopicMessage()) {
+                    it.messageThreadId(message.messageThreadId)
+                }
+                it
+            }
     }
 
     fun sendReply(): SendMessage.SendMessageBuilder<*, *> {
