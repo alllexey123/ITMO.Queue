@@ -32,7 +32,7 @@ class NewLabCommand(
         if (subjects.isNotEmpty()) {
             send.withInlineKeyboard("Выберите предмет: ", getSubjectListButtons(subjects))
         } else {
-            send.text("Не добавлен ни один предмет\n\nДобавить предмет - /new_subject")
+            send.text("Не добавлен ни один предмет\n\nДобавить предмет - /${NewSubjectCommand.NAME}")
         }
 
         telegram.execute(send.build())
@@ -103,7 +103,11 @@ class NewLabCommand(
 
     override fun prefix() = command()
 
-    override fun command() = "new_lab"
+    override fun command() = NAME
 
     override fun scope() = Scope.GROUP
+
+    companion object {
+        const val NAME = "new_lab"
+    }
 }

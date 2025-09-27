@@ -50,7 +50,7 @@ class ListSubjectsCommand(
             } else {
                 appendLine("Пока тут пусто\n")
             }
-            appendLine("Добавить предмет - /new_subject")
+            appendLine("Добавить предмет - /${NewSubjectCommand.NAME}")
         }
     }
 
@@ -159,7 +159,11 @@ class ListSubjectsCommand(
 
     override fun prefix() = command()
 
-    override fun command() = "list_subjects"
+    override fun command() = NAME
 
     override fun scope() = Scope.GROUP
+
+    companion object {
+        const val NAME = "list_subjects"
+    }
 }

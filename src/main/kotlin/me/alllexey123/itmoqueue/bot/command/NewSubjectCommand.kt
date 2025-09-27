@@ -23,8 +23,12 @@ class NewSubjectCommand(
         telegram.execute(messageBuilder)
     }
 
-    override fun command() = "new_subject"
+    override fun command() = NAME
 
     override fun scope() = Scope.GROUP
+
+    companion object {
+        const val NAME = "new_subject"
+    }
 
 }

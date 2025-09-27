@@ -4,6 +4,7 @@ import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
+import me.alllexey123.itmoqueue.bot.command.ListLabsCommand
 import me.alllexey123.itmoqueue.services.LabWorkService
 import me.alllexey123.itmoqueue.services.QueueService
 import me.alllexey123.itmoqueue.services.SubjectService
@@ -43,7 +44,7 @@ class EnterLabNameState(
         sendMessage.text(
             """
             Лаба "$labName" по предмету "${subject.name}" создана
-            Список - /list_labs
+            Список - /${ListLabsCommand.NAME}
         """.trimIndent()
         )
 

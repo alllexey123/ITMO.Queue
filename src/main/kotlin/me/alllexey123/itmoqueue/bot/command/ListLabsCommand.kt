@@ -66,7 +66,7 @@ class ListLabsCommand(
             } else {
                 appendLine("Пока тут пусто\n")
             }
-            appendLine("Добавить лабу - /new_lab")
+            appendLine("Добавить лабу - /${NewLabCommand.NAME}")
         }
     }
 
@@ -320,7 +320,11 @@ class ListLabsCommand(
 
     override fun prefix() = command()
 
-    override fun command() = "list_labs"
+    override fun command() = NAME
 
     override fun scope() = Scope.GROUP
+
+    companion object {
+        const val NAME = "list_labs"
+    }
 }
