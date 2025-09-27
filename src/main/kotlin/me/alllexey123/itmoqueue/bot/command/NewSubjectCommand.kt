@@ -1,13 +1,12 @@
 package me.alllexey123.itmoqueue.bot.command
 
+import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
+import me.alllexey123.itmoqueue.bot.extensions.withForceReply
 import me.alllexey123.itmoqueue.bot.state.EnterSubjectNameState
 import me.alllexey123.itmoqueue.bot.state.StateManager
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import org.telegram.telegrambots.meta.api.objects.message.Message
-import me.alllexey123.itmoqueue.bot.extensions.*
 
 @Component
 class NewSubjectCommand(
@@ -16,17 +15,13 @@ class NewSubjectCommand(
     private val enterSubjectNameState: EnterSubjectNameState
 ) : CommandHandler {
 
-    override fun handle(message: Message) {
-        val chat = message.chat
-        val messageBuilder = SendMessage.builder()
-            .chatId(chat.id)
-            .replyToMessageId(message.messageId)
+    override fun handle(context: MessageContext) {
+        val messageBuilder = context.sendReply()
             .withForceReply("Введите новое название предмета (отмена - /cancel):")
 
-        stateManager.setHandler(chat.id, enterSubjectNameState)
+        stateManager.setHandler(context.chatId, enterSubjectNameState)
         telegram.execute(messageBuilder)
     }
-
 
     override fun command() = "new_subject"
 

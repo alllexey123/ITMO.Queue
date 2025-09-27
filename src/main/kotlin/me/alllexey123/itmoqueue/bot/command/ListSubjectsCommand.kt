@@ -1,7 +1,9 @@
 package me.alllexey123.itmoqueue.bot.command
 
 import me.alllexey123.itmoqueue.bot.Emoji
+import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
+import me.alllexey123.itmoqueue.bot.callback.CallbackContext
 import me.alllexey123.itmoqueue.bot.callback.CallbackHandler
 import me.alllexey123.itmoqueue.bot.extensions.edit
 import me.alllexey123.itmoqueue.bot.extensions.inlineButton
@@ -10,36 +12,28 @@ import me.alllexey123.itmoqueue.bot.extensions.withInlineKeyboard
 import me.alllexey123.itmoqueue.bot.state.EditSubjectState
 import me.alllexey123.itmoqueue.bot.state.StateManager
 import me.alllexey123.itmoqueue.model.Subject
-import me.alllexey123.itmoqueue.services.GroupService
 import me.alllexey123.itmoqueue.services.SubjectService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery
-import org.telegram.telegrambots.meta.api.objects.message.MaybeInaccessibleMessage
-import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 
 @Component
 class ListSubjectsCommand(
-    private val groupService: GroupService,
     private val telegram: Telegram,
     private val subjectService: SubjectService,
     private val editSubjectState: EditSubjectState,
-    private val stateManager: StateManager
+    private val stateManager: StateManager,
 ) :
     CommandHandler, CallbackHandler {
 
-    override fun handle(message: Message) {
-        val chat = message.chat
-        val group = groupService.getOrCreateByChatId(chat.id)
+    override fun handle(context: MessageContext) {
+        val group = context.group!!
         val subjects = group.subjects
-        val sendMessage = SendMessage.builder()
-            .chatId(message.chat.id)
+        val sendMessage = context.send()
             .withInlineKeyboard(getListMessageText(subjects), getListKeyboard(subjects))
 
         telegram.execute(sendMessage)
@@ -113,15 +107,12 @@ class ListSubjectsCommand(
         return InlineKeyboardMarkup.builder().keyboard(rows).build()
     }
 
-    override fun handle(callbackQuery: CallbackQuery) {
-        val split = decode(callbackQuery.data)
-        val message = callbackQuery.message
-        val chat = message.chat
-        when (split[0]) {
+    override fun handle(context: CallbackContext) {
+        when (context.asString(0)) {
             "select" -> {
-                val subject = subjectService.findById(split[1].toLong())
+                val subject = subjectService.findById(context.asLong(1))
                 val editMessage = EditMessageText.builder()
-                    .edit(message)
+                    .edit(context.message)
                     .parseMode(ParseMode.MARKDOWN)
                     .withInlineKeyboard(getSubjectText(subject), getSubjectKeyboard(subject))
 
@@ -129,16 +120,15 @@ class ListSubjectsCommand(
             }
 
             "delete" -> {
-                subjectService.deleteById(split[1].toLong())
-                subjectService.flush()
+                subjectService.deleteById(context.asLong(1))
 
-                updateSubjectList(message)
+                updateSubjectList(context)
             }
 
             "edit" -> {
-                val subjectId = split[1].toLong()
+                val subjectId = context.asLong(1)
                 val editMessage = EditMessageText.builder()
-                    .edit(message)
+                    .edit(context.message)
                     .text("Введите новое название предмета (ответом на это сообщение):")
                     .replyMarkup(
                         InlineKeyboardMarkup.builder().keyboardRow(
@@ -147,26 +137,25 @@ class ListSubjectsCommand(
                     )
                     .build()
 
-                editSubjectState.setChatData(chat.id, subjectId)
-                stateManager.setHandler(chat.id, editSubjectState)
+                editSubjectState.setChatData(context.chatId, subjectId)
+                stateManager.setHandler(context.chatId, editSubjectState)
 
                 telegram.execute(editMessage)
             }
 
             "main" -> {
-                updateSubjectList(message)
+                updateSubjectList(context)
             }
         }
     }
 
-    fun updateSubjectList(message: MaybeInaccessibleMessage) {
-        val subjects = groupService.getOrCreateByChatId(message.chatId).subjects
+    fun updateSubjectList(context: CallbackContext) {
+        val subjects = context.group!!.subjects
         val editMessage = EditMessageText.builder()
-            .edit(message)
+            .edit(context.message)
             .withInlineKeyboard(getListMessageText(subjects), getListKeyboard(subjects))
         telegram.execute(editMessage)
     }
-
 
     override fun prefix() = command()
 

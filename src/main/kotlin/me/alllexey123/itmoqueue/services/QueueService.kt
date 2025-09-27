@@ -1,5 +1,6 @@
 package me.alllexey123.itmoqueue.services
 
+import me.alllexey123.itmoqueue.model.LabWork
 import me.alllexey123.itmoqueue.model.Queue
 import me.alllexey123.itmoqueue.model.QueueEntry
 import me.alllexey123.itmoqueue.model.QueueType
@@ -9,6 +10,7 @@ import me.alllexey123.itmoqueue.repositories.QueueRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.OffsetDateTime
 
 @Service
 class QueueService(
@@ -30,6 +32,27 @@ class QueueService(
 
     fun findEntryById(id: Long): QueueEntry? {
         return queueEntryRepository.findByIdOrNull(id)
+    }
+
+    fun isActiveInQueue(user: User, queue: Queue): Boolean {
+        return queueEntryRepository.findByQueueAndUserAndDone(queue, user, false) != null
+    }
+
+    fun addToQueue(user: User, queue: Queue, attempt: Int): QueueEntry {
+        return queueEntryRepository.save(QueueEntry(
+            user = user,
+            queue = queue,
+            attemptNumber = attempt,
+            addedAt = OffsetDateTime.now()
+        ))
+    }
+
+    fun createDefaultQueue(lab: LabWork): Queue {
+        return save(Queue(
+            labWork = lab,
+            type = QueueType.FIRST_PRIORITY,
+            teacher = null
+        ))
     }
 
     fun sortedEntries(queue: Queue): List<QueueEntry> {
@@ -58,7 +81,6 @@ class QueueService(
         }
         return queue.entries
     }
-
 
     @Transactional
     fun removeUserFromQueue(user: User, queue: Queue): Boolean {

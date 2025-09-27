@@ -1,11 +1,13 @@
 package me.alllexey123.itmoqueue.bot.state
 
 import jakarta.transaction.Transactional
+import me.alllexey123.itmoqueue.bot.MessageContext
+import me.alllexey123.itmoqueue.services.ContextService
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.message.Message
 
 @Component
-class StateManager {
+class StateManager(private val contextService: ContextService) {
 
     val runtimeHandlers = mutableMapOf<Long, StateHandler>()
 
@@ -26,7 +28,18 @@ class StateManager {
     @Transactional
     fun handle(message: Message) {
         val chatId = message.chat.id
-        val success = runtimeHandlers[chatId]?.handle(message) ?: true
+
+        val membership = contextService.getMembership(message)
+        val user = membership?.user
+            ?: contextService.getUser(message)
+
+        val context = MessageContext(
+            message = message,
+            user = user,
+            membership = membership,
+        )
+
+        val success = runtimeHandlers[chatId]?.handle(context) ?: true
         if (success) {
             removeHandler(chatId)
         }

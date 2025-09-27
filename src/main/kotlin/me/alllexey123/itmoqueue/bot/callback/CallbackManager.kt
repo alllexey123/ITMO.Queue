@@ -6,6 +6,7 @@ import me.alllexey123.itmoqueue.bot.command.ListLabsCommand
 import me.alllexey123.itmoqueue.bot.command.ListSubjectsCommand
 import me.alllexey123.itmoqueue.bot.command.NewLabCommand
 import me.alllexey123.itmoqueue.bot.state.StateManager
+import me.alllexey123.itmoqueue.services.ContextService
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery
 
@@ -14,7 +15,8 @@ class CallbackManager(
     private val listSubjectsCommand: ListSubjectsCommand,
     private val newLabCommand: NewLabCommand,
     private val listLabsCommand: ListLabsCommand,
-    private val stateManager: StateManager
+    private val stateManager: StateManager,
+    private val contextService: ContextService
 ) {
 
     lateinit var handlers: List<CallbackHandler>
@@ -33,7 +35,21 @@ class CallbackManager(
         stateManager.removeHandler(callbackQuery.message.chatId)
         for (handler in handlers) {
             if (callbackQuery.data.startsWith(handler.prefix())) {
-                handler.handle(callbackQuery)
+                val membership = contextService.getMembership(callbackQuery)
+                val user = membership?.user
+                    ?: contextService.getUser(
+                        callbackQuery.from.id,
+                        callbackQuery.from.userName
+                    )
+
+                val context = CallbackContext(
+                    query = callbackQuery,
+                    membership = membership,
+                    data = handler.decode(callbackQuery.data),
+                    user = user,
+                    group = membership?.group,
+                )
+                handler.handle(context)
             }
         }
     }

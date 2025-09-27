@@ -1,11 +1,10 @@
 package me.alllexey123.itmoqueue.bot.callback
 
 import me.alllexey123.itmoqueue.bot.Encoder
-import org.telegram.telegrambots.meta.api.objects.CallbackQuery
 
 interface CallbackHandler : Encoder {
 
-    fun handle(callbackQuery: CallbackQuery)
+    fun handle(context: CallbackContext)
 
     fun prefix(): String
 

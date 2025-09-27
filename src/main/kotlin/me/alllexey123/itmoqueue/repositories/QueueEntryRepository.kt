@@ -12,4 +12,6 @@ interface QueueEntryRepository : JpaRepository<QueueEntry, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM QueueEntry qe WHERE qe.user = :user AND qe.queue = :queue")
     fun deleteByUserAndQueue(user: User, queue: Queue)
+
+    fun findByQueueAndUserAndDone(queue: Queue, user: User, done: Boolean): QueueEntry?
 }

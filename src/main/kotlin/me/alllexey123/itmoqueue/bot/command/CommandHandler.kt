@@ -1,14 +1,15 @@
 package me.alllexey123.itmoqueue.bot.command
 
+import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
+import me.alllexey123.itmoqueue.bot.extensions.withReplyTo
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.generics.TelegramClient
-import me.alllexey123.itmoqueue.bot.extensions.*
 
 interface CommandHandler {
 
-    fun handle(message: Message)
+    fun handle(context: MessageContext)
 
     fun command(): String
 

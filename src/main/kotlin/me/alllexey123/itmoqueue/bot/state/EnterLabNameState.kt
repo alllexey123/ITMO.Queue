@@ -1,24 +1,17 @@
 package me.alllexey123.itmoqueue.bot.state
 
+import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
-import me.alllexey123.itmoqueue.bot.extensions.replyTo
-import me.alllexey123.itmoqueue.model.LabWork
-import me.alllexey123.itmoqueue.model.Queue
-import me.alllexey123.itmoqueue.model.QueueType
-import me.alllexey123.itmoqueue.services.GroupService
 import me.alllexey123.itmoqueue.services.LabWorkService
 import me.alllexey123.itmoqueue.services.QueueService
 import me.alllexey123.itmoqueue.services.SubjectService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import org.telegram.telegrambots.meta.api.objects.message.Message
 
 @Component
 class EnterLabNameState(
-    private val groupService: GroupService,
     private val telegram: Telegram,
     private val subjectService: SubjectService,
     private val validators: Validators,
@@ -27,18 +20,15 @@ class EnterLabNameState(
 ) : StateHandler() {
 
     // data in format "subject [subjectId]"
-    override fun handle(message: Message): Boolean {
-        val chat = message.chat
-        val labName = message.text.trim()
-        val group = groupService.getOrCreateByChatId(chat.id)
-        val data = getChatData(chat.id)
+    override fun handle(context: MessageContext): Boolean {
+        val labName = context.text.trim()
+        val group = context.group!!
+        val subjectId = getChatData(context.chatId)?.getOrNull(0)?.toLong()
 
-        if (data?.getOrNull(0) == null) return true
-        val subject = subjectService.findById(data[0].toLong())
+        val subject = subjectService.findById(subjectId)
         if (subject == null) return true
 
-        val sendMessage = SendMessage.builder()
-            .replyTo(message)
+        val sendMessage = context.sendReply()
 
         val check = validators.checkLabName(labName, group)
         if (check is ValidationResult.Failure){
@@ -47,22 +37,8 @@ class EnterLabNameState(
             return false
         }
 
-        val lab = labWorkService.save(
-            LabWork(
-                name = labName,
-                group = group,
-                subject = subject
-            )
-        )
-
-        val queue = Queue(
-            labWork = lab,
-            type = QueueType.FIRST_PRIORITY,
-            teacher = null
-        )
-
-        labWorkService.save(lab)
-        queueService.save(queue)
+        val lab = labWorkService.create(group, labName, subject)
+        queueService.createDefaultQueue(lab)
 
         sendMessage.text(
             """
