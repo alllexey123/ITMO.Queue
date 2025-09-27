@@ -14,11 +14,11 @@ abstract class StateHandler : Encoder {
     abstract fun scope(): Scope
 
     fun getChatData(chatId: Long): List<String>? {
-        return chatData[chatId]?.map { s -> decodeParam(s) }
+        return chatData[chatId]
     }
 
     fun setChatData(chatId: Long, vararg data: Any?) {
-        chatData[chatId] = data.map { o -> encodeParam(o) }
+        chatData[chatId] = data.map { o -> o.toString() }
     }
 
     fun removeChatData(chatId: Long) {
