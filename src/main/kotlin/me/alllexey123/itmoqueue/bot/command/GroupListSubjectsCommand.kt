@@ -22,7 +22,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 
 @Component
-class ListSubjectsCommand(
+class GroupListSubjectsCommand(
     private val telegram: Telegram,
     private val subjectService: SubjectService,
     private val editSubjectState: EditSubjectState,
@@ -50,7 +50,7 @@ class ListSubjectsCommand(
             } else {
                 appendLine("Пока тут пусто\n")
             }
-            appendLine("Добавить предмет - /${NewSubjectCommand.NAME}")
+            appendLine("Добавить предмет - /${GroupNewSubjectCommand.NAME}")
         }
     }
 

@@ -1,11 +1,11 @@
 package me.alllexey123.itmoqueue.bot
 
 import jakarta.transaction.Transactional
-import me.alllexey123.itmoqueue.bot.command.NewLabCommand
-import me.alllexey123.itmoqueue.bot.command.NewSubjectCommand
+import me.alllexey123.itmoqueue.bot.command.GroupNewLabCommand
 import me.alllexey123.itmoqueue.model.Membership
-import me.alllexey123.itmoqueue.repositories.MembershipRepository
-import me.alllexey123.itmoqueue.services.*
+import me.alllexey123.itmoqueue.services.ContextService
+import me.alllexey123.itmoqueue.services.MembershipService
+import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators
@@ -14,11 +14,8 @@ import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMemberUpdated
 
 @Component
 class MyChatMemberHandler(
-    private val groupService: GroupService,
-    private val userService: UserService,
     private val contextService: ContextService,
     private val telegram: Telegram,
-    private val membershipRepository: MembershipRepository,
     private val membershipService: MembershipService
 ) {
 
@@ -58,7 +55,7 @@ class MyChatMemberHandler(
                  • Я не вижу все сообщения (в целях вашей же анонимности), поэтому при настройке иногда надо отвечать на моё сообщение напрямую (например, при выборе названия лабы).
                  • Бот в ранней бете (почему вы это вообще читаете?)
                  
-                Для начала напишите /${NewSubjectCommand.NAME} и /${NewLabCommand.NAME}
+                Для начала напишите /${GroupNewLabCommand.NAME}
             """.trimIndent())
             .build()
 

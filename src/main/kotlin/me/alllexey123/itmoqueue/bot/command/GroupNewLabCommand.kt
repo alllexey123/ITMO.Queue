@@ -17,7 +17,7 @@ import me.alllexey123.itmoqueue.bot.state.EnterLabNameState
 import me.alllexey123.itmoqueue.bot.state.StateManager
 
 @Component
-class NewLabCommand(
+class GroupNewLabCommand(
     private val telegram: Telegram,
     private val stateManager: StateManager,
     private val enterLabNameState: EnterLabNameState
@@ -33,7 +33,7 @@ class NewLabCommand(
         if (subjects.isNotEmpty()) {
             send.withInlineKeyboard("Выберите предмет: ", getSubjectListButtons(subjects))
         } else {
-            send.text("Не добавлен ни один предмет\n\nДобавить предмет - /${NewSubjectCommand.NAME}")
+            send.text("Не добавлен ни один предмет\n\nДобавить предмет - /${GroupNewSubjectCommand.NAME}")
         }
 
         telegram.execute(send.build())

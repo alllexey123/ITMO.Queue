@@ -4,7 +4,7 @@ import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
-import me.alllexey123.itmoqueue.bot.command.ListSubjectsCommand
+import me.alllexey123.itmoqueue.bot.command.GroupListSubjectsCommand
 import me.alllexey123.itmoqueue.services.GroupService
 import me.alllexey123.itmoqueue.services.SubjectService
 import me.alllexey123.itmoqueue.services.Telegram
@@ -37,7 +37,7 @@ class EnterSubjectNameState(
         sendMessage.text(
             """
             Предмет "$subjectName" добавлен
-            Список - /${ListSubjectsCommand.NAME}
+            Список - /${GroupListSubjectsCommand.NAME}
         """.trimIndent()
         )
 

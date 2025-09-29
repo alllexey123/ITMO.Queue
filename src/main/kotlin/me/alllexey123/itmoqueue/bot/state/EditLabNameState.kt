@@ -4,7 +4,7 @@ import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
-import me.alllexey123.itmoqueue.bot.command.ListLabsCommand
+import me.alllexey123.itmoqueue.bot.command.GroupListLabsCommand
 import me.alllexey123.itmoqueue.services.LabWorkService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
@@ -40,7 +40,7 @@ class EditLabNameState(
         send.text(
             """
             Название изменено с "$prev" на "$labName".
-            Список - /${ListLabsCommand.NAME}
+            Список - /${GroupListLabsCommand.NAME}
         """.trimIndent()
         )
 

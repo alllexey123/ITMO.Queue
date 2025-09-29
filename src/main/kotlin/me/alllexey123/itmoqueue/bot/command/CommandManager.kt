@@ -14,15 +14,16 @@ import org.telegram.telegrambots.meta.generics.TelegramClient
 
 @Component
 class CommandManager(
-    private val newLabCommand: NewLabCommand,
-    private val listLabsCommand: ListLabsCommand,
+    private val groupNewLabCommand: GroupNewLabCommand,
+    private val groupListLabsCommand: GroupListLabsCommand,
     private val startCommand: StartCommand,
-    private val newSubjectCommand: NewSubjectCommand,
+    private val groupNewSubjectCommand: GroupNewSubjectCommand,
     private val cancelCommand: CancelCommand,
     private val telegram: Telegram,
-    private val listSubjectsCommand: ListSubjectsCommand,
+    private val groupListSubjectsCommand: GroupListSubjectsCommand,
     private val contextService: ContextService,
-    private val setNicknameCommand: SetNicknameCommand
+    private val userSetNicknameCommand: UserSetNicknameCommand,
+    private val userListLabsCommand: UserListLabsCommand
 ) {
 
     lateinit var handlers: List<CommandHandler>
@@ -32,11 +33,12 @@ class CommandManager(
         handlers = listOf(
             startCommand,
             cancelCommand,
-            newSubjectCommand,
-            listSubjectsCommand,
-            newLabCommand,
-            listLabsCommand,
-            setNicknameCommand,
+            groupNewSubjectCommand,
+            groupListSubjectsCommand,
+            groupNewLabCommand,
+            groupListLabsCommand,
+            userSetNicknameCommand,
+            userListLabsCommand
         )
     }
 

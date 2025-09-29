@@ -19,6 +19,6 @@ class LabWork(
     @OneToMany(mappedBy = "labWork", cascade = [(CascadeType.ALL)], orphanRemoval = true)
     val queues: MutableList<Queue> = mutableListOf(),
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     val subject: Subject,
 )

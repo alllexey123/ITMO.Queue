@@ -12,7 +12,7 @@ class Queue (
     @OneToMany(mappedBy = "queue", cascade = [(CascadeType.ALL)], orphanRemoval = true)
     val entries: MutableList<QueueEntry> = mutableListOf(),
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     val labWork: LabWork,
 
     @Enumerated(EnumType.STRING)
