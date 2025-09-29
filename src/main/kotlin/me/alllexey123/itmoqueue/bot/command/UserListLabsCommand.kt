@@ -7,11 +7,13 @@ import me.alllexey123.itmoqueue.bot.callback.CallbackContext
 import me.alllexey123.itmoqueue.bot.extensions.*
 import me.alllexey123.itmoqueue.model.LabWork
 import me.alllexey123.itmoqueue.model.QueueEntry
+import me.alllexey123.itmoqueue.model.User
 import me.alllexey123.itmoqueue.services.LabWorkService
 import me.alllexey123.itmoqueue.services.QueueService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
@@ -29,10 +31,19 @@ class UserListLabsCommand(
     private val perRow = 3
 
     override fun handle(context: MessageContext) {
-        val user = context.user
-        val queueEntries = user.queueEntries
-            .filter { !it.done }
-        val sendMessage = context.send()
+        sendMessageWithList(context.chatId, context.user)
+    }
+
+    fun sendMessageWithList(chatId: Long, user: User) {
+        val user = user
+        val queueEntries: List<QueueEntry> = user.queueEntries
+            .groupBy { it.queue.labWork }
+            .values
+            .mapNotNull { entriesForOneLab ->
+                entriesForOneLab.firstOrNull { !it.done } ?: entriesForOneLab.lastOrNull()
+            }
+        val sendMessage = SendMessage.builder()
+            .chatId(chatId)
             .parseMode(ParseMode.MARKDOWN)
             .withInlineKeyboard(getListMessageText(queueEntries), getListKeyboard(queueEntries))
         telegram.execute(sendMessage)
@@ -48,7 +59,7 @@ class UserListLabsCommand(
     private fun getListMessageText(entries: List<QueueEntry>, page: Int = 1): String {
         val pageEntries = entries.drop((page - 1) * perPage).take(perPage)
         return buildString {
-            appendLine("Список ваших активных лаб:\n")
+            appendLine("Список ваших лаб:\n")
             if (pageEntries.isNotEmpty()) {
                 pageEntries.forEachIndexed { i, entry ->
                     val labIndex = (page - 1) * perPage + i + 1
@@ -90,7 +101,12 @@ class UserListLabsCommand(
 
     private fun handleEntryPageQuery(context: CallbackContext) {
         val page = context.asInt(1)
-        val queueEntries = context.user.queueEntries.filter { !it.done }
+        val queueEntries: List<QueueEntry> = context.user.queueEntries
+            .groupBy { it.queue.labWork }
+            .values
+            .mapNotNull { entriesForOneLab ->
+                entriesForOneLab.firstOrNull { !it.done } ?: entriesForOneLab.lastOrNull()
+            }
         val editMessage = EditMessageText.builder()
             .edit(context.message)
             .parseMode(ParseMode.MARKDOWN)
@@ -130,7 +146,12 @@ class UserListLabsCommand(
     }
 
     override fun updateLabsList(context: CallbackContext) {
-        val queueEntries = context.user.queueEntries.filter { !it.done }
+        val queueEntries: List<QueueEntry> = context.user.queueEntries
+            .groupBy { it.queue.labWork }
+            .values
+            .mapNotNull { entriesForOneLab ->
+                entriesForOneLab.firstOrNull { !it.done } ?: entriesForOneLab.lastOrNull()
+            }
         val editMessage = EditMessageText.builder()
             .edit(context.message)
             .parseMode(ParseMode.MARKDOWN)
