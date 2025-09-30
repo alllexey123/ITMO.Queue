@@ -48,7 +48,7 @@ class CallbackManager(
                 val context = CallbackContext(
                     query = callbackQuery,
                     membership = membership,
-                    data = handler.decode(callbackQuery.data),
+                    data = CallbackData(handler.decode(callbackQuery.data)),
                     user = user,
                     group = membership?.group,
                 )

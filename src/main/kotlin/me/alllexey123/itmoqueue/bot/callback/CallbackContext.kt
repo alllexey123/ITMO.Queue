@@ -15,7 +15,7 @@ import org.telegram.telegrambots.meta.api.objects.message.Message
 class CallbackContext(
     val query: CallbackQuery,
     val membership: Membership?,
-    val data: List<String>,
+    val data: CallbackData,
 
     val message: MaybeInaccessibleMessage = query.message,
     val isPrivate: Boolean = message.isUserMessage,
@@ -24,25 +24,8 @@ class CallbackContext(
     val group: Group?,
     val id: String = query.id,
     val chatId: Long = chat.id,
-    val messageId: Int = message.messageId,
-) {
-
-    fun asString(index: Int): String {
-        return data[index]
-    }
-
-    fun asInt(index: Int): Int {
-        return data[index].toInt()
-    }
-
-    fun asLong(index: Int): Long {
-        return data[index].toLong()
-    }
-
-    fun asBoolean(index: Int): Boolean {
-        return data[index].toBoolean()
-    }
-
+    val messageId: Int = message.messageId
+) : ICallbackData by `data` {
     fun send(): SendMessage.SendMessageBuilder<*, *> {
         return SendMessage.builder()
             .chatId(chatId)
