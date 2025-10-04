@@ -34,18 +34,21 @@ class TelegramViewService(
         return buildString {
             appendLine("Лаба *${lab.name}*")
             appendLine("Предмет: *${lab.subject.name}*")
-            appendLine("Обновлено: ${dtf.format(LocalTime.now())}\n")
+            appendLine("——————————————")
 
             if (entries.isNullOrEmpty()) {
                 appendLine("Очередь пуста")
             } else {
                 appendLine("Очередь:")
                 entries.forEachIndexed { i, entry ->
+                    val pos = String.format("%2s", i + 1)
                     val user = entry.user
                     val status = if (entry.done) Emoji.CHECK else Emoji.CANCEL
-                    appendLine("`${i + 1}. [${entry.attemptNumber}|$status]` ${user.mention()}")
+                    appendLine("`$pos. $status` ${user.mention()} `[${entry.attemptNumber}]`")
                 }
             }
+            appendLine("——————————————")
+            appendLine("Обновлено: ${dtf.format(LocalTime.now())}\n")
         }
     }
 
@@ -73,16 +76,16 @@ class TelegramViewService(
                 InlineKeyboardRow(
                     listOf(
                         inlineButton(Emoji.BACK, serialize(CallbackData.ShowLabsList())),
-                        inlineButton(Emoji.EDIT, serialize(CallbackData.EditLab())),
-                        inlineButton(Emoji.DELETE, serialize(CallbackData.DeleteLab()))
+                        inlineButton(Emoji.CHECK, serialize(CallbackData.MarkQueueEntryDone()))
                     )
                 )
             )
             rows.add(
                 InlineKeyboardRow(
                     listOf(
-                        inlineButton(Emoji.CHECK, serialize(CallbackData.MarkQueueEntryDone())),
-                        inlineButton(Emoji.PIN, serialize(CallbackData.PinLab()))
+                        inlineButton(Emoji.PIN, serialize(CallbackData.PinLab())),
+                        inlineButton(Emoji.EDIT, serialize(CallbackData.EditLab())),
+                        inlineButton(Emoji.DELETE, serialize(CallbackData.DeleteLab()))
                     )
                 )
             )
