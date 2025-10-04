@@ -28,7 +28,8 @@ class MessageContext (
     }
 
     fun sendReply(): SendMessage.SendMessageBuilder<*, *> {
-        return send().replyToMessageId(message.messageId)
+        return SendMessage.builder()
+            .chatId(chatId).replyToMessageId(message.messageId)
     }
 
     fun notEnoughPermissions(): SendMessage {

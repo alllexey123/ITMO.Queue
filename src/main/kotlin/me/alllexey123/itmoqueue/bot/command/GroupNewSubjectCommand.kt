@@ -18,7 +18,7 @@ class GroupNewSubjectCommand(
     override fun handleMessage(context: MessageContext) {
         if (!context.requireAdmin(telegram)) return
         val messageBuilder = context.sendReply()
-            .withForceReply("Введите новое название предмета (отмена - /cancel):")
+            .withForceReply("Введите название для предмета (ответом на это сообщение)\n\nотмена - /cancel")
 
         stateManager.setHandler(context.chatId, enterSubjectNameState)
         telegram.execute(messageBuilder)

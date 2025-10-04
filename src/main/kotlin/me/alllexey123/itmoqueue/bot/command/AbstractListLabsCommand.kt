@@ -73,6 +73,7 @@ abstract class AbstractListLabsCommand(
     }
 
     fun handleAddToQueueCancel(context: CallbackContext) {
+        val lab = getLabOrDelete(context) ?: return
         val MIN_SECONDS = 60
         val managedMessage = context.managedMessage!!
         val userId = managedMessage.metadata.getLong("user_id")
@@ -80,6 +81,9 @@ abstract class AbstractListLabsCommand(
         if (context.user.id != userId && seconds < MIN_SECONDS) {
             context.answer("Это сообщение можно будет удалить через ${MIN_SECONDS - seconds} секунд.")
         } else {
+            val mainMessageId = managedMessage.metadata.getInt("main_message_id")
+            val mainMessage = managedMessageService.findById(context.chatId, mainMessageId)
+            if (mainMessage?.messageType == MessageType.LAB_DETAILS) updateLabDetails(lab, managedMessage)
             context.answer("Сообщение удалено.")
             context.deleteMessage()
         }

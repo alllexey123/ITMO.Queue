@@ -89,7 +89,7 @@ class GroupNewLabCommand(
     fun handlePickSubject(context: CallbackContext, subjectId: Long) {
         val editMessage = EditMessageText.builder()
             .edit(context.message)
-            .text("Введите название лабы (ответом на это сообщение):")
+            .text("Введите название для лабы (ответом на это сообщение)\n\nотмена - /cancel")
             .build()
 
         enterLabNameState.setChatData(context.chatId, subjectId)
