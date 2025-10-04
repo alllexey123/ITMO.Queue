@@ -1,10 +1,11 @@
 package me.alllexey123.itmoqueue.model
 
 import jakarta.persistence.*
+import me.alllexey123.itmoqueue.model.enums.QueueType
 
 @Entity
-@Table(name = "lab_works")
-class LabWork(
+@Table(name = "labs")
+class Lab(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -16,8 +17,11 @@ class LabWork(
     @JoinColumn(name = "group_id")
     val group: Group,
 
-    @OneToMany(mappedBy = "labWork", cascade = [(CascadeType.ALL)], orphanRemoval = true)
-    val queues: MutableList<Queue> = mutableListOf(),
+    @OneToMany(mappedBy = "lab", cascade = [(CascadeType.ALL)], orphanRemoval = true)
+    val queueEntries: MutableList<QueueEntry> = mutableListOf(),
+
+    @Enumerated(EnumType.STRING)
+    val queueType: QueueType,
 
     @ManyToOne(fetch = FetchType.EAGER)
     val subject: Subject,

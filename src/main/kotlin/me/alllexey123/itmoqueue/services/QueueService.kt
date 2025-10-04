@@ -1,81 +1,60 @@
 package me.alllexey123.itmoqueue.services
 
-import me.alllexey123.itmoqueue.model.LabWork
-import me.alllexey123.itmoqueue.model.Queue
+import me.alllexey123.itmoqueue.model.Lab
 import me.alllexey123.itmoqueue.model.QueueEntry
-import me.alllexey123.itmoqueue.model.QueueType
+import me.alllexey123.itmoqueue.model.enums.QueueType
 import me.alllexey123.itmoqueue.model.User
 import me.alllexey123.itmoqueue.repositories.QueueEntryRepository
-import me.alllexey123.itmoqueue.repositories.QueueRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.OffsetDateTime
 
 @Service
 class QueueService(
-    private val queueRepository: QueueRepository,
     private val queueEntryRepository: QueueEntryRepository
 ) {
-
-    fun save(queue: Queue): Queue {
-        return queueRepository.save(queue)
-    }
 
     fun save(queueEntry: QueueEntry): QueueEntry {
         return queueEntryRepository.save(queueEntry)
     }
-
-    fun findQueueById(id: Long): Queue? {
-        return queueRepository.findByIdOrNull(id)
-    }
-
+    
     fun findEntryById(id: Long): QueueEntry? {
         return queueEntryRepository.findByIdOrNull(id)
     }
 
-    fun findEntryByQueueAndUser(user: User, queue: Queue, done: Boolean): QueueEntry? {
-        return queueEntryRepository.findByQueueAndUserAndDone(queue, user, done)
+    fun findEntryByLabAndUserAndDone(lab: Lab, user: User, done: Boolean): QueueEntry? {
+        return queueEntryRepository.findByLabAndUserAndDone(lab, user, done)
     }
 
-    fun isActiveInQueue(user: User, queue: Queue): Boolean {
-        return queueEntryRepository.findByQueueAndUserAndDone(queue, user, false) != null
+    fun hasActiveEntry(user: User, lab: Lab): Boolean {
+        return queueEntryRepository.findByLabAndUserAndDone(lab, user, false) != null
     }
 
-    fun addToQueue(user: User, queue: Queue, attempt: Int): QueueEntry {
+    fun addToQueue(user: User, lab: Lab, attempt: Int): QueueEntry {
         return queueEntryRepository.save(QueueEntry(
             user = user,
-            queue = queue,
+            lab = lab,
             attemptNumber = attempt,
-            addedAt = OffsetDateTime.now()
         ))
     }
 
-    fun createDefaultQueue(lab: LabWork): Queue {
-        return save(Queue(
-            labWork = lab,
-            type = QueueType.FIRST_PRIORITY,
-            teacher = null
-        ))
-    }
-
-    fun sortedEntries(queue: Queue): List<QueueEntry> {
-        return when (queue.type) {
-            QueueType.SIMPLE -> queue.entries.sortedBy { it.addedAt }
-            QueueType.FIRST_PRIORITY -> queue.entries.sortedWith { l1, l2 ->
+    fun sortedEntries(lab: Lab): List<QueueEntry> {
+        return when (lab.queueType) {
+            QueueType.SIMPLE -> lab.queueEntries.sortedBy { it.createdAt }
+            QueueType.FIRST_PRIORITY -> lab.queueEntries.sortedWith { l1, l2 ->
                 when {
                     l1.attemptNumber == 1 && l2.attemptNumber != 1 -> -1
                     l1.attemptNumber != 1 && l2.attemptNumber == 1 -> 1
-                    else -> l1.addedAt.compareTo(l2.addedAt)
+                    else -> l1.createdAt.compareTo(l2.createdAt)
                 }
             }
-            QueueType.PRIORITY -> queue.entries
+            QueueType.PRIORITY -> lab.queueEntries // todo later
         }
     }
 
     @Transactional
-    fun removeUserFromQueue(user: User, queue: Queue): Boolean {
-        val removed = queue.entries.removeIf { !it.done && it.user == user }
+    fun removeUserFromQueue(user: User, lab: Lab): Boolean {
+        val removed = lab.queueEntries.removeIf { !it.done && it.user == user }
         return removed
     }
 

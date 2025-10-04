@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 @Component
 class StartCommand : CommandHandler {
 
-    override fun handle(context: MessageContext) {
+    override fun handleMessage(context: MessageContext) {
 
     }
 

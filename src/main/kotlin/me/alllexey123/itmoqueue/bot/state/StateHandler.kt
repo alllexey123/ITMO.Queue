@@ -1,10 +1,9 @@
 package me.alllexey123.itmoqueue.bot.state
 
-import me.alllexey123.itmoqueue.bot.Encoder
 import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
 
-abstract class StateHandler : Encoder {
+abstract class StateHandler {
 
     val chatData = mutableMapOf<Long, List<String>>()
 

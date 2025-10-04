@@ -14,7 +14,7 @@ class UserSetNicknameCommand(
     private val stateManager: StateManager,
     private val enterNicknameState: EnterNicknameStateHandler
 ) : CommandHandler {
-    override fun handle(context: MessageContext) {
+    override fun handleMessage(context: MessageContext) {
         val messageBuilder = context.sendReply()
             .withForceReply("Введите новый никнейм (отмена - /cancel):")
 

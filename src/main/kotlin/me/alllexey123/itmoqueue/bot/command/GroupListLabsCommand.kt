@@ -4,194 +4,135 @@ import me.alllexey123.itmoqueue.bot.Emoji
 import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.callback.CallbackContext
-import me.alllexey123.itmoqueue.bot.extensions.edit
-import me.alllexey123.itmoqueue.bot.extensions.inlineButton
-import me.alllexey123.itmoqueue.bot.extensions.inlineRowButton
-import me.alllexey123.itmoqueue.bot.extensions.withInlineKeyboard
+import me.alllexey123.itmoqueue.bot.callback.CallbackData
+import me.alllexey123.itmoqueue.bot.callback.CallbackDataSerializer
+import me.alllexey123.itmoqueue.bot.callback.ICallbackDataSerializer
+import me.alllexey123.itmoqueue.bot.extensions.*
 import me.alllexey123.itmoqueue.bot.state.EditLabNameState
 import me.alllexey123.itmoqueue.bot.state.StateManager
-import me.alllexey123.itmoqueue.model.LabWork
-import me.alllexey123.itmoqueue.services.LabWorkService
-import me.alllexey123.itmoqueue.services.QueueService
-import me.alllexey123.itmoqueue.services.Telegram
+import me.alllexey123.itmoqueue.model.Group
+import me.alllexey123.itmoqueue.model.Lab
+import me.alllexey123.itmoqueue.model.ManagedMessage
+import me.alllexey123.itmoqueue.model.enums.MessageType
+import me.alllexey123.itmoqueue.services.*
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
-import java.time.LocalDateTime
 
 @Component
 class GroupListLabsCommand(
     private val telegram: Telegram,
-    private val stateManager: StateManager,
-    private val labWorkService: LabWorkService,
+    private val labService: LabService,
+    private val queueService: QueueService,
+    private val callbackDataSerializer: CallbackDataSerializer,
+    private val telegramViewService: TelegramViewService,
+    private val managedMessageService: ManagedMessageService,
     private val editLabNameState: EditLabNameState,
-    queueService: QueueService,
-) : BaseListLabsCommand(telegram, labWorkService, queueService) {
+    private val stateManager: StateManager,
+) : AbstractListLabsCommand(telegram, labService, queueService, telegramViewService, managedMessageService),
+    ICallbackDataSerializer by callbackDataSerializer {
 
-    private val perPage = 9
-    private val perRow = 3
-
-    override fun handle(context: MessageContext) {
-        val group = context.group!!
-        val labs = group.labs
-        val sendMessage = context.send()
-            .withInlineKeyboard(getListMessageText(labs), getListKeyboard(labs))
-        telegram.execute(sendMessage)
-    }
-
-    override fun handle(context: CallbackContext) {
-        super.handle(context)
-        when (context.asString(0)) {
-            "delete" -> handleLabDeleteQuery(context)
-            "edit" -> handleLabEditQuery(context)
-            "lab_page" -> handleLabPageQuery(context)
-            "pin_lab_data" -> handleLabDataPinQuery(context)
+    override fun handleCallback(context: CallbackContext) {
+        super.handleCallback(context)
+        when (context.data) {
+            is CallbackData.DeleteLab -> handleDeleteLab(context)
+            is CallbackData.EditLab -> handleEditLab(context)
+            is CallbackData.PinLab -> handlePinLab(context)
+            else -> {}
         }
     }
 
-    private fun getListMessageText(labs: List<LabWork>, page: Int = 1): String {
-        val pageLabs = labs.drop((page - 1) * perPage).take(perPage)
-        return buildString {
-            appendLine("Список лаб в этой группе:\n")
-            if (pageLabs.isNotEmpty()) {
-                pageLabs.forEachIndexed { i, lab ->
-                    val labIndex = (page - 1) * perPage + i + 1
-                    appendLine("$labIndex. ${lab.name}")
-                }
-            } else {
-                appendLine("Пока тут пусто\n")
-            }
-            appendLine("\nДобавить лабу - /${GroupNewLabCommand.NAME}")
-        }
+    fun handleDeleteLab(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val lab = getLabOrDelete(context) ?: return
+        labService.deleteById(lab.id!!)
     }
 
-    private fun getListKeyboard(labs: List<LabWork>, page: Int = 1): InlineKeyboardMarkup {
-        val pageLabs = labs.drop((page - 1) * perPage).take(perPage)
-        val rows = pageLabs.chunked(perRow).mapIndexed { i, chunk ->
-            InlineKeyboardRow(
-                chunk.mapIndexed { j, lab ->
-                    val labIndex = (page - 1) * perPage + i * perRow + j + 1
-                    inlineButton(labIndex.toString(), encode("select", lab.id, LocalDateTime.MIN, false))
-                }
-            )
-        }.toMutableList()
-
-        val pagination = mutableListOf<InlineKeyboardButton>()
-        if (page > 1) {
-            pagination.add(inlineButton(Emoji.ARROW_LEFT, encode("lab_page", page - 1)))
-        }
-        if (page * perPage < labs.size) {
-            pagination.add(inlineButton(Emoji.ARROW_RIGHT, encode("lab_page", page + 1)))
-        }
-
-        if (pagination.isNotEmpty()) {
-            rows.add(InlineKeyboardRow(pagination))
-        }
-        return InlineKeyboardMarkup(rows)
-    }
-
-    private fun handleLabPageQuery(context: CallbackContext) {
-        val page = context.asInt(1)
-        val labs = context.group!!.labs
-        val editMessage = EditMessageText.builder()
-            .edit(context.message)
-            .withInlineKeyboard(getListMessageText(labs, page), getListKeyboard(labs, page = page))
-        telegram.execute(editMessage)
-    }
-
-    private fun handleLabEditQuery(context: CallbackContext) {
-        if (!context.requireAdmin(telegram)) return
-        val labId = context.asLong(1)
+    fun handleEditLab(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val lab = getLabOrDelete(context) ?: return
         val editMessage = EditMessageText.builder()
             .edit(context.message)
             .text("Введите новое название лабы (ответом на это сообщение):")
             .replyMarkup(
                 InlineKeyboardMarkup.builder().keyboardRow(
-                    inlineRowButton(Emoji.BACK, encode("select", labId, LocalDateTime.now(), false))
+                    inlineRowButton(Emoji.BACK, serialize(CallbackData.SelectLab(lab.id!!)))
                 ).build()
-            )
-            .build()
-        editLabNameState.setChatData(context.chatId, labId)
+            ).build()
+
+        editLabNameState.setChatData(context.chatId, lab.id!!)
         stateManager.setHandler(context.chatId, editLabNameState)
         telegram.execute(editMessage)
     }
 
-    private fun handleLabDeleteQuery(context: CallbackContext) {
-        if (!context.requireAdmin(telegram)) return
-        labWorkService.deleteById(context.asLong(1))
-        updateLabsList(context)
+    fun handlePinLab(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val lab = getLabOrDelete(context) ?: return
+        updateLabDetails(lab, context.managedMessage!!, pinned = true)
     }
 
-    private fun handleLabDataPinQuery(context: CallbackContext) {
-        if (!context.requireAdmin(telegram)) return
-        val lab = labWorkService.findById(context.asLong(1))
-        editLabDataMessage(context.chatId, context.messageId, lab, true)
+    override fun handleLabsList(context: CallbackContext) {
+        updateListMessage(context.group!!, context.managedMessage!!)
     }
 
-    override fun getLabKeyboard(lab: LabWork?, pinned: Boolean): InlineKeyboardMarkup {
-        if (lab == null) return InlineKeyboardMarkup.builder().build()
-
-        val rows = mutableListOf(
-            InlineKeyboardRow(
-                listOf(
-                    inlineButton(Emoji.PLUS, encode("add_to_queue", lab.id, pinned)),
-                    inlineButton(Emoji.MINUS, encode("remove_from_queue", lab.id, pinned)),
-                    inlineButton(Emoji.REFRESH, encode("select", lab.id, LocalDateTime.now(), pinned)),
-                )
-            )
-        )
-
-        if (pinned) {
-            rows.add(
-                InlineKeyboardRow(
-                    inlineButton(Emoji.CHECK, encode("mark_done", lab.queues[0].id, pinned))
-                )
-            )
-        } else {
-            rows.add(
-                InlineKeyboardRow(
-                    listOf(
-                        inlineButton(Emoji.BACK, encode("main")),
-                        inlineButton(Emoji.EDIT, encode("edit", lab.id)),
-                        inlineButton(Emoji.DELETE, encode("delete", lab.id))
-                    )
-                )
-            )
-            rows.add(
-                InlineKeyboardRow(
-                    listOf(
-                        inlineButton(Emoji.CHECK, encode("mark_done", lab.queues[0].id, pinned)),
-                        inlineButton(Emoji.PIN, encode("pin_lab_data", lab.id))
-                    )
-                )
-            )
-        }
-
-        return InlineKeyboardMarkup(rows)
+    override fun handleLabsListPage(context: CallbackContext, page: Int) {
+        updateListMessage(context.group!!, context.managedMessage!!, page)
     }
 
-    override fun editLabDataMessage(chatId: Long, messageId: Int, lab: LabWork?, pinned: Boolean) {
-        val editMessage = EditMessageText.builder()
-            .chatId(chatId)
-            .messageId(messageId)
+    override fun handleSelectLab(context: CallbackContext, labId: Long) {
+        val lab = getLabOrDelete(context, labId) ?: return
+        updateLabDetails(lab, context.managedMessage!!, pinned = null)
+    }
+
+    override fun updateLabDetails(lab: Lab, managedMessage: ManagedMessage) {
+        updateLabDetails(lab, managedMessage, null)
+    }
+
+    fun updateLabDetails(lab: Lab, managedMessage: ManagedMessage, pinned: Boolean?) {
+        val realPinned = pinned ?: managedMessage.metadata.getBoolean("pinned", false)
+        val text = telegramViewService.buildLabDetailsText(lab, lab.queueEntries)
+        val keyboard = telegramViewService.buildLabDetailsGroupKeyboard(lab, realPinned)
+        val editMessage = managedMessage.edit()
             .parseMode(ParseMode.MARKDOWN)
-            .withInlineKeyboard(getLabText(lab), getLabKeyboard(lab, pinned))
+            .withTextAndInlineKeyboard(text, keyboard)
         telegram.execute(editMessage)
+        managedMessageService.touch(managedMessage)
+        managedMessage.metadata["lab_id"] = lab.id!!
+        managedMessage.metadata["pinned"] = realPinned
+        managedMessage.messageType = MessageType.LAB_DETAILS
     }
 
-    override fun updateLabsList(context: CallbackContext) {
+    fun sendListMessage(context: MessageContext) {
         val labs = context.group!!.labs
-        val editMessage = EditMessageText.builder()
-            .edit(context.message)
-            .withInlineKeyboard(getListMessageText(labs), getListKeyboard(labs))
-        telegram.execute(editMessage)
+        val text = telegramViewService.buildLabsListGroupText(labs, page = 1)
+        val keyboard = telegramViewService.buildLabsListGroupKeyboard(labs, page = 1)
+        val sendMessage = context.send()
+            .withTextAndInlineKeyboard(text, keyboard)
+        val sent = telegram.execute(sendMessage)
+        managedMessageService.register(
+            sent,
+            type = MessageType.GROUP_LAB_LIST,
+            metadata = mutableMapOf("labs_list_page" to 1)
+        )
     }
 
-    override fun command() = NAME
-    override fun prefix() = command()
+    fun updateListMessage(group: Group, managedMessage: ManagedMessage, page: Int? = null) {
+        val realPage = page ?: managedMessage.metadata.getInt("labs_list_page", 1)
+        val labs = group.labs
+        val text = telegramViewService.buildLabsListGroupText(labs, realPage)
+        val keyboard = telegramViewService.buildLabsListGroupKeyboard(labs, realPage)
+        val editMessage = managedMessage.edit()
+            .withTextAndInlineKeyboard(text, keyboard)
+        telegram.execute(editMessage)
+        managedMessage.metadata["labs_list_page"] = realPage
+        managedMessage.messageType = MessageType.GROUP_LAB_LIST
+    }
+
+    override fun handleMessage(context: MessageContext) {
+        sendListMessage(context)
+    }
+
     override fun scope() = Scope.GROUP
 
     companion object {

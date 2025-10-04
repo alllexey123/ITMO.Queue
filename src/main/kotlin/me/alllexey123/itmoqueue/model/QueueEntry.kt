@@ -1,10 +1,13 @@
 package me.alllexey123.itmoqueue.model
 
 import jakarta.persistence.*
-import java.time.OffsetDateTime
+import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
+import java.time.Instant
 
 @Entity
 @Table(name = "queue_entries")
+@EntityListeners(AuditingEntityListener::class)
 class QueueEntry (
 
     @Id
@@ -15,11 +18,17 @@ class QueueEntry (
     val user: User,
 
     @ManyToOne(fetch = FetchType.EAGER)
-    val queue: Queue,
+    val lab: Lab,
 
     var done: Boolean = false,
 
     val attemptNumber: Int,
 
-    val addedAt: OffsetDateTime
-)
+    @Temporal(TemporalType.TIMESTAMP)
+    var markedDoneAt: Instant? = null,
+) {
+
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    var createdAt: Instant = Instant.now()
+}

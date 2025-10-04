@@ -5,7 +5,7 @@ import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
 import me.alllexey123.itmoqueue.bot.command.GroupListLabsCommand
-import me.alllexey123.itmoqueue.services.LabWorkService
+import me.alllexey123.itmoqueue.services.LabService
 import me.alllexey123.itmoqueue.services.QueueService
 import me.alllexey123.itmoqueue.services.SubjectService
 import me.alllexey123.itmoqueue.services.Telegram
@@ -16,7 +16,7 @@ class EnterLabNameState(
     private val telegram: Telegram,
     private val subjectService: SubjectService,
     private val validators: Validators,
-    private val labWorkService: LabWorkService,
+    private val labService: LabService,
     private val queueService: QueueService
 ) : StateHandler() {
 
@@ -39,8 +39,7 @@ class EnterLabNameState(
             return false
         }
 
-        val lab = labWorkService.create(group, labName, subject)
-        queueService.createDefaultQueue(lab)
+        labService.create(group, labName, subject)
 
         sendMessage.text(
             """

@@ -63,7 +63,7 @@ class CommandManager(
                 membership = membership,
             )
             fullMatches.forEach {
-                it.handle(context)
+                it.handleMessage(context)
             }
         }
     }

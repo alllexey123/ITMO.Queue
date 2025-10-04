@@ -5,7 +5,7 @@ import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
 import me.alllexey123.itmoqueue.bot.command.GroupListLabsCommand
-import me.alllexey123.itmoqueue.services.LabWorkService
+import me.alllexey123.itmoqueue.services.LabService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 class EditLabNameState(
     private val telegram: Telegram,
     private val validators: Validators,
-    private val labWorkService: LabWorkService
+    private val labService: LabService
 ) : StateHandler() {
 
     override fun handle(context: MessageContext): Boolean {
@@ -23,7 +23,7 @@ class EditLabNameState(
 
         val labId = getChatData(context.chatId)?.getOrNull(0)?.toLong()
 
-        val lab = labWorkService.findById(labId)
+        val lab = labService.findById(labId)
         if (lab == null) return true
 
         val check = validators.checkLabName(labName, group)

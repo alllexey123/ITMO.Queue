@@ -29,8 +29,7 @@ class GroupService(private val groupRepository: GroupRepository) {
         if (group == null) {
             return save(Group(
                 name = null,
-                chatId = chatId,
-                addedBy = null
+                chatId = chatId
             ))
         }
         return group

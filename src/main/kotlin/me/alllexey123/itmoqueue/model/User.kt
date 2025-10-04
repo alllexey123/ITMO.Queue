@@ -19,7 +19,7 @@ class User(
     val memberships: MutableSet<Membership> = mutableSetOf(),
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "user", orphanRemoval = true)
-    val queueEntries: MutableSet<QueueEntry> = mutableSetOf(),
+    val queueEntries: MutableList<QueueEntry> = mutableListOf(),
 
     ) {
     fun mention(): String {

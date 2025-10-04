@@ -16,13 +16,10 @@ class Group(
     val members: MutableSet<Membership> = mutableSetOf(),
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
-    val labs: MutableList<LabWork> = mutableListOf(),
+    val labs: MutableList<Lab> = mutableListOf(),
 
     @Column(unique = true, nullable = false)
     val chatId: Long,
-
-    @OneToOne(fetch = FetchType.LAZY)
-    var addedBy: User? = null,
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
     val subjects: MutableList<Subject> = mutableListOf(),

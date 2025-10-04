@@ -1,8 +1,10 @@
 package me.alllexey123.itmoqueue.bot.callback
 
 import me.alllexey123.itmoqueue.model.Group
+import me.alllexey123.itmoqueue.model.ManagedMessage
 import me.alllexey123.itmoqueue.model.Membership
 import me.alllexey123.itmoqueue.model.User
+import me.alllexey123.itmoqueue.services.ManagedMessageService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
@@ -16,6 +18,8 @@ class CallbackContext(
     val query: CallbackQuery,
     val membership: Membership?,
     val data: CallbackData,
+    private val telegram: Telegram,
+    private val managedMessageService: ManagedMessageService,
 
     val message: MaybeInaccessibleMessage = query.message,
     val isPrivate: Boolean = message.isUserMessage,
@@ -24,8 +28,9 @@ class CallbackContext(
     val group: Group?,
     val id: String = query.id,
     val chatId: Long = chat.id,
-    val messageId: Int = message.messageId
-) : ICallbackData by `data` {
+    val messageId: Int = message.messageId,
+    val managedMessage: ManagedMessage? = null
+) {
     fun send(): SendMessage.SendMessageBuilder<*, *> {
         return SendMessage.builder()
             .chatId(chatId)
@@ -50,13 +55,22 @@ class CallbackContext(
         return AnswerCallbackQuery.builder().callbackQueryId(id)
     }
 
+    fun answer(text: String): AnswerCallbackQuery {
+        return answerBuilder().text(text).build()
+    }
+
     fun isAdmin(): Boolean {
         return membership?.type == Membership.Type.ADMIN
     }
 
-    fun requireAdmin(telegram: Telegram): Boolean {
+    fun requireAdmin(): Boolean {
         if (isAdmin()) return true
         telegram.execute(notEnoughPermissions())
         return false
+    }
+
+    fun deleteMessage() {
+        telegram.execute(deleteBuilder().build())
+        managedMessageService.unregister(chatId, messageId)
     }
 }

@@ -5,7 +5,7 @@ import me.alllexey123.itmoqueue.bot.Scope
 
 interface CommandHandler {
 
-    fun handle(context: MessageContext)
+    fun handleMessage(context: MessageContext)
 
     fun command(): String
 

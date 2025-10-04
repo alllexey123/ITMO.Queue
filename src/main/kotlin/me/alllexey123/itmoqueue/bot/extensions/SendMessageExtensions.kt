@@ -17,7 +17,7 @@ fun SendMessage.SendMessageBuilder<*, *>.withForceReply(text: String): SendMessa
         .build()
 }
 
-fun SendMessage.SendMessageBuilder<*, *>.withInlineKeyboard(
+fun SendMessage.SendMessageBuilder<*, *>.withTextAndInlineKeyboard(
     text: String,
     keyboard: InlineKeyboardMarkup
 ): SendMessage {

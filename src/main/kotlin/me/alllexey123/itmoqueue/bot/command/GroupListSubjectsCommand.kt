@@ -3,23 +3,22 @@ package me.alllexey123.itmoqueue.bot.command
 import me.alllexey123.itmoqueue.bot.Emoji
 import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
-import me.alllexey123.itmoqueue.bot.callback.CallbackContext
-import me.alllexey123.itmoqueue.bot.callback.CallbackHandler
-import me.alllexey123.itmoqueue.bot.extensions.edit
-import me.alllexey123.itmoqueue.bot.extensions.inlineButton
-import me.alllexey123.itmoqueue.bot.extensions.inlineRowButton
-import me.alllexey123.itmoqueue.bot.extensions.withInlineKeyboard
+import me.alllexey123.itmoqueue.bot.callback.*
+import me.alllexey123.itmoqueue.bot.extensions.*
 import me.alllexey123.itmoqueue.bot.state.EditSubjectState
 import me.alllexey123.itmoqueue.bot.state.StateManager
+import me.alllexey123.itmoqueue.model.Group
+import me.alllexey123.itmoqueue.model.ManagedMessage
 import me.alllexey123.itmoqueue.model.Subject
+import me.alllexey123.itmoqueue.model.enums.MessageType
+import me.alllexey123.itmoqueue.services.ManagedMessageService
 import me.alllexey123.itmoqueue.services.SubjectService
 import me.alllexey123.itmoqueue.services.Telegram
+import me.alllexey123.itmoqueue.services.TelegramViewService
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 
 @Component
 class GroupListSubjectsCommand(
@@ -27,135 +26,112 @@ class GroupListSubjectsCommand(
     private val subjectService: SubjectService,
     private val editSubjectState: EditSubjectState,
     private val stateManager: StateManager,
-) :
-    CommandHandler, CallbackHandler {
+    private val telegramViewService: TelegramViewService,
+    private val managedMessageService: ManagedMessageService,
+    private val callbackDataSerializer: CallbackDataSerializer,
+) : CommandHandler, CallbackHandler, ICallbackDataSerializer by callbackDataSerializer {
 
-    override fun handle(context: MessageContext) {
-        val group = context.group!!
-        val subjects = group.subjects
-        val sendMessage = context.send()
-            .withInlineKeyboard(getListMessageText(subjects), getListKeyboard(subjects))
-
-        telegram.execute(sendMessage)
+    override fun handleMessage(context: MessageContext) {
+        sendListMessage(context)
     }
 
-    fun getListMessageText(subjects: List<Subject>): String {
-        return buildString {
-            if (subjects.isNotEmpty()) {
-                appendLine("Список предметов:\n")
-                subjects.forEachIndexed { i, subject ->
-                    appendLine("${i + 1}. ${subject.name}")
-                }
-                appendLine()
-            } else {
-                appendLine("Пока тут пусто\n")
-            }
-            appendLine("Добавить предмет - /${GroupNewSubjectCommand.NAME}")
+    override fun handleCallback(context: CallbackContext) {
+        when (val data = context.data) {
+            is CallbackData.DeleteSubject -> handleDeleteSubject(context)
+            is CallbackData.EditSubject -> handleEditSubject(context)
+            is CallbackData.SelectSubject -> handleSelectSubject(context, data.subjectId)
+            is CallbackData.ShowSubjectsList -> handleListSubjects(context)
+            is CallbackData.ShowSubjectsPage -> handleSubjectsListPage(context, data.page)
+            else -> {}
         }
     }
 
-
-    fun getListKeyboard(subjects: List<Subject>, perRow: Int = 3): InlineKeyboardMarkup {
-        val rows = subjects.chunked(perRow).map { chunk ->
-            InlineKeyboardRow(
-                chunk.mapIndexed { i, subject ->
-                    InlineKeyboardButton.builder()
-                        .text((subjects.indexOf(subject) + 1).toString())
-                        .callbackData(encode("select", subject.id))
-                        .build()
-                }
-            )
-        }
-        return InlineKeyboardMarkup(rows)
+    fun handleDeleteSubject(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val subject = getSubjectOrDelete(context) ?: return
+        subjectService.deleteById(subject.id!!)
+        updateListMessage(context.group!!, context.managedMessage!!)
     }
 
-
-    fun getSubjectText(subject: Subject?): String {
-        if (subject == null) {
-            return "Предмет не найден"
-        }
-
-        return buildString {
-            appendLine("Предмет \"*${subject.name}*\"")
-
-            if (subject.labWorks.isEmpty()) {
-                appendLine("Лабораторных работ пока не было")
-            } else {
-                appendLine("Лабы: ")
-                subject.labWorks.forEachIndexed { i, labWork ->
-                    appendLine("${i + 1}. ${labWork.name}")
-                }
-            }
-        }
-    }
-
-    fun getSubjectKeyboard(subject: Subject?): InlineKeyboardMarkup {
-        if (subject == null) {
-            return InlineKeyboardMarkup.builder().build()
-        }
-
-        val rows = mutableListOf<InlineKeyboardRow>()
-        rows.add(
-            InlineKeyboardRow(
-                listOf(
-                    inlineButton(Emoji.BACK, encode("main")),
-                    inlineButton(Emoji.EDIT, encode("edit", subject.id)),
-                    inlineButton(Emoji.DELETE, encode("delete", subject.id))
-                )
-            )
-        )
-        return InlineKeyboardMarkup.builder().keyboard(rows).build()
-    }
-
-    override fun handle(context: CallbackContext) {
-        when (context.asString(0)) {
-            "select" -> {
-                val subject = subjectService.findById(context.asLong(1))
-                val editMessage = EditMessageText.builder()
-                    .edit(context.message)
-                    .parseMode(ParseMode.MARKDOWN)
-                    .withInlineKeyboard(getSubjectText(subject), getSubjectKeyboard(subject))
-
-                telegram.execute(editMessage)
-            }
-
-            "delete" -> {
-                if (!context.requireAdmin(telegram)) return
-                subjectService.deleteById(context.asLong(1))
-                updateSubjectList(context)
-            }
-
-            "edit" -> {
-                if (!context.requireAdmin(telegram)) return
-                val subjectId = context.asLong(1)
-                val editMessage = EditMessageText.builder()
-                    .edit(context.message)
-                    .text("Введите новое название предмета (ответом на это сообщение):")
-                    .replyMarkup(
-                        InlineKeyboardMarkup.builder().keyboardRow(
-                            inlineRowButton(Emoji.BACK, encode("select", subjectId))
-                        ).build()
-                    )
-                    .build()
-
-                editSubjectState.setChatData(context.chatId, subjectId)
-                stateManager.setHandler(context.chatId, editSubjectState)
-
-                telegram.execute(editMessage)
-            }
-
-            "main" -> {
-                updateSubjectList(context)
-            }
-        }
-    }
-
-    fun updateSubjectList(context: CallbackContext) {
-        val subjects = context.group!!.subjects
+    fun handleEditSubject(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val subject = getSubjectOrDelete(context) ?: return
         val editMessage = EditMessageText.builder()
             .edit(context.message)
-            .withInlineKeyboard(getListMessageText(subjects), getListKeyboard(subjects))
+            .text("Введите новое название предмета (ответом на это сообщение):")
+            .replyMarkup(
+                InlineKeyboardMarkup.builder().keyboardRow(
+                    inlineRowButton(Emoji.BACK, serialize(CallbackData.SelectSubject(subject.id!!)))
+                ).build()
+            )
+            .build()
+
+        editSubjectState.setChatData(context.chatId, subject.id)
+        stateManager.setHandler(context.chatId, editSubjectState)
         telegram.execute(editMessage)
+    }
+
+    fun handleSelectSubject(context: CallbackContext, subjectId: Long) {
+        val subject = getSubjectOrDelete(context, subjectId) ?: return
+
+        updateSubjectDetails(subject, context.managedMessage!!)
+    }
+
+    fun handleListSubjects(context: CallbackContext) {
+        updateListMessage(context.group!!, context.managedMessage!!)
+    }
+
+    fun handleSubjectsListPage(context: CallbackContext, page: Int) {
+        updateListMessage(context.group!!, context.managedMessage!!, page)
+    }
+
+    fun updateSubjectDetails(subject: Subject, managedMessage: ManagedMessage) {
+        val text = telegramViewService.buildSubjectDetailsText(subject)
+        val keyboard = telegramViewService.buildSubjectDetailsKeyboard(subject)
+        val editMessage = managedMessage.edit()
+            .parseMode(ParseMode.MARKDOWN)
+            .withTextAndInlineKeyboard(text, keyboard)
+        telegram.execute(editMessage)
+        managedMessage.metadata["subject_id"] = subject.id!!
+        managedMessage.messageType = MessageType.SUBJECT_DETAILS
+    }
+
+    fun updateListMessage(group: Group, managedMessage: ManagedMessage, page: Int? = null) {
+        val realPage = page ?: managedMessage.metadata.getInt("subjects_list_page", 1)
+        val subjects = group.subjects
+        val text = telegramViewService.buildSubjectsListText(subjects, realPage)
+        val keyboard = telegramViewService.buildSubjectsListKeyboard(subjects, realPage)
+        val editMessage = managedMessage.edit()
+            .withTextAndInlineKeyboard(text, keyboard)
+        telegram.execute(editMessage)
+        managedMessage.metadata["subjects_list_page"] = realPage
+        managedMessage.messageType = MessageType.SUBJECT_LIST
+    }
+
+    fun getSubjectOrDelete(context: CallbackContext, subjectId: Long? = null): Subject? {
+        val managedMessage = context.managedMessage
+        val lab = subjectService.findById(subjectId ?: managedMessage?.metadata?.getLongOrNull("subject_id"))
+        if (lab == null) {
+            context.deleteMessage()
+            return null
+        }
+        return lab
+    }
+
+    fun sendListMessage(context: MessageContext) {
+        val group = context.group!!
+        val subjects = group.subjects
+        val text = telegramViewService.buildSubjectsListText(subjects)
+        val keyboard = telegramViewService.buildSubjectsListKeyboard(subjects)
+        val sendMessage = context.send()
+            .withTextAndInlineKeyboard(text, keyboard)
+
+        val sent = telegram.execute(sendMessage)
+        managedMessageService.register(
+            sent,
+            type = MessageType.SUBJECT_LIST,
+            metadata = mutableMapOf("subjects_list_page" to 1)
+        )
     }
 
     override fun prefix() = command()

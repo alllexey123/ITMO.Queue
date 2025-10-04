@@ -15,7 +15,7 @@ fun EditMessageText.EditMessageTextBuilder<*, *>.edit(
 ): EditMessageText.EditMessageTextBuilder<*, *> =
     this.messageId(message.messageId).chatId(message.chatId)
 
-fun EditMessageText.EditMessageTextBuilder<*, *>.withInlineKeyboard(
+fun EditMessageText.EditMessageTextBuilder<*, *>.withTextAndInlineKeyboard(
     text: String,
     keyboard: InlineKeyboardMarkup
 ): EditMessageText {

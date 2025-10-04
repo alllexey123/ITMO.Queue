@@ -11,7 +11,7 @@ class CancelCommand(private val stateManager: StateManager,
                     private val telegram: Telegram
 ) : CommandHandler {
 
-    override fun handle(context: MessageContext) {
+    override fun handleMessage(context: MessageContext) {
         val handler = stateManager.removeHandler(context.chatId)
         val sendMessage = context.sendReply()
             .text(if (handler == null) "Никакое действие не требовалось" else "Действие отменено")
