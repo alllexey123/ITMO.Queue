@@ -36,6 +36,9 @@ class MyChatMemberHandler(
     fun onJoin(update: ChatMemberUpdated) {
         val chatId = update.chat.id
         val from = update.from
+        if (update.chat.isUserChat) {
+            return
+        }
         val membership = contextService.getMembership(chatId, from.id, from.userName)
         membershipService.resetMembershipTypes(membership.group)
         membership.type = Membership.Type.ADMIN
@@ -55,6 +58,7 @@ class MyChatMemberHandler(
                  • Я не вижу все сообщения (в целях вашей же анонимности), поэтому при настройке иногда надо отвечать на моё сообщение напрямую (например, при выборе названия лабы).
                  • Исходный код бота полностью открыт и находится [тут](https://github.com/alllexey123/ITMO.Queue)
                  
+                Обязательно изучите инструкцию [тут](https://telegra.ph/Instrukciya-dlya-bota-ITMOQueue-10-04)
                 Для начала напишите /new\_subject и /new\_lab 
             """.trimIndent())
             .disableWebPagePreview(true)
