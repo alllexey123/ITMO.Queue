@@ -39,7 +39,6 @@ class TelegramViewService(
             if (entries.isNullOrEmpty()) {
                 appendLine("Очередь пуста")
             } else {
-                appendLine("Очередь:")
                 entries.forEachIndexed { i, entry ->
                     val pos = String.format("%2s", i + 1)
                     val user = entry.user
