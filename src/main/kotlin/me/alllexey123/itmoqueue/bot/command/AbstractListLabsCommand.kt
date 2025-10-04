@@ -83,7 +83,7 @@ abstract class AbstractListLabsCommand(
         } else {
             val mainMessageId = managedMessage.metadata.getInt("main_message_id")
             val mainMessage = managedMessageService.findById(context.chatId, mainMessageId)
-            if (mainMessage?.messageType == MessageType.LAB_DETAILS) updateLabDetails(lab, managedMessage)
+            if (mainMessage?.messageType == MessageType.LAB_DETAILS) updateLabDetails(lab, mainMessage)
             context.answer("Сообщение удалено.")
             context.deleteMessage()
         }
@@ -131,7 +131,7 @@ abstract class AbstractListLabsCommand(
             queueService.addToQueue(context.user, lab, attempt)
             context.answer("Вы добавлены в очередь")
             val mainMessage = managedMessageService.findById(context.chatId, mainMessageId)
-            if (mainMessage?.messageType == MessageType.LAB_DETAILS) updateLabDetails(lab, managedMessage)
+            if (mainMessage?.messageType == MessageType.LAB_DETAILS) updateLabDetails(lab, mainMessage)
         }
     }
 
