@@ -1,7 +1,6 @@
 package me.alllexey123.itmoqueue
 
 import jakarta.annotation.PostConstruct
-import me.alllexey123.itmoqueue.bot.BotProperties
 import me.alllexey123.itmoqueue.bot.TelegramBot
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
@@ -10,13 +9,13 @@ import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication
 
 @SpringBootApplication
 @EnableJpaAuditing
-class Application(private val telegramBot: TelegramBot, private val botProperties: BotProperties) {
+class Application(private val telegramBot: TelegramBot, private val itmoQueueProperties: ItmoQueueProperties) {
 	lateinit var telegramApp: TelegramBotsLongPollingApplication
 
 	@PostConstruct
 	fun init() {
 		telegramApp = TelegramBotsLongPollingApplication()
-		telegramApp.registerBot(botProperties.token, telegramBot)
+		telegramApp.registerBot(itmoQueueProperties.botToken, telegramBot)
 	}
 
 }

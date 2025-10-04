@@ -1,5 +1,6 @@
 package me.alllexey123.itmoqueue.services
 
+import me.alllexey123.itmoqueue.ItmoQueueProperties
 import me.alllexey123.itmoqueue.model.Group
 import me.alllexey123.itmoqueue.model.Lab
 import me.alllexey123.itmoqueue.model.Subject
@@ -9,7 +10,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
 @Service
-class LabService(private val labRepository: LabRepository) {
+class LabService(private val labRepository: LabRepository, private val itmoQueueProperties: ItmoQueueProperties) {
 
     fun save(lab: Lab): Lab {
         return labRepository.save(lab)
@@ -40,6 +41,10 @@ class LabService(private val labRepository: LabRepository) {
 
     fun findByShortId(id: String): Lab? {
         return labRepository.findByShortId(id)
+    }
+
+    fun getLabUrl(lab: Lab): String {
+        return "${itmoQueueProperties.origin}/lab/${lab.shortId}"
     }
 
     fun findById(id: Long?): Lab? {

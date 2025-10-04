@@ -91,7 +91,8 @@ class GroupListLabsCommand(
 
     fun updateLabDetails(lab: Lab, managedMessage: ManagedMessage, pinned: Boolean?) {
         val realPinned = pinned ?: managedMessage.metadata.getBoolean("pinned", false)
-        val text = telegramViewService.buildLabDetailsText(lab, lab.queueEntries)
+        val activeEntries = lab.queueEntries.filter { !it.done }
+        val text = telegramViewService.buildLabDetailsText(lab, activeEntries)
         val keyboard = telegramViewService.buildLabDetailsGroupKeyboard(lab, realPinned)
         val editMessage = managedMessage.edit()
             .parseMode(ParseMode.MARKDOWN)

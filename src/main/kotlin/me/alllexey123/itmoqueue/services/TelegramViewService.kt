@@ -23,7 +23,8 @@ private const val perRow = 3
 
 @Component
 class TelegramViewService(
-    private val callbackDataSerializer: CallbackDataSerializer
+    private val callbackDataSerializer: CallbackDataSerializer,
+    private val labService: LabService
 ) : ICallbackDataSerializer by callbackDataSerializer {
 
     fun buildLabDetailsText(lab: Lab?, entries: List<QueueEntry>?): String {
@@ -48,6 +49,7 @@ class TelegramViewService(
             }
             appendLine("——————————————")
             appendLine("Обновлено: ${dtf.format(LocalTime.now())}\n")
+            appendLine("[Ссылка](${labService.getLabUrl(lab)}) на полную очередь")
         }
     }
 

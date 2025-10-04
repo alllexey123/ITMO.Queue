@@ -132,6 +132,7 @@ abstract class AbstractListLabsCommand(
             context.answer("Вы добавлены в очередь")
             val mainMessage = managedMessageService.findById(context.chatId, mainMessageId)
             if (mainMessage?.messageType == MessageType.LAB_DETAILS) updateLabDetails(lab, mainMessage)
+            context.deleteMessage()
         }
     }
 
