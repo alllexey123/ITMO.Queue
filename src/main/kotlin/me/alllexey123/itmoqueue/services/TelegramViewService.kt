@@ -75,17 +75,17 @@ class TelegramViewService(
             rows.add(
                 InlineKeyboardRow(
                     listOf(
-                        inlineButton(Emoji.BACK, serialize(CallbackData.ShowLabsList())),
-                        inlineButton(Emoji.CHECK, serialize(CallbackData.MarkQueueEntryDone()))
+                        inlineButton(Emoji.PIN, serialize(CallbackData.PinLab())),
+                        inlineButton(Emoji.EDIT, serialize(CallbackData.EditLab())),
+                        inlineButton(Emoji.DELETE, serialize(CallbackData.DeleteLab()))
                     )
                 )
             )
             rows.add(
                 InlineKeyboardRow(
                     listOf(
-                        inlineButton(Emoji.PIN, serialize(CallbackData.PinLab())),
-                        inlineButton(Emoji.EDIT, serialize(CallbackData.EditLab())),
-                        inlineButton(Emoji.DELETE, serialize(CallbackData.DeleteLab()))
+                        inlineButton(Emoji.BACK, serialize(CallbackData.ShowLabsList())),
+                        inlineButton(Emoji.CHECK, serialize(CallbackData.MarkQueueEntryDone()))
                     )
                 )
             )
