@@ -5,4 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface LabRepository : JpaRepository<Lab, Long> {
 
+    fun findByShortId(id: String): Lab?
 }

@@ -9,7 +9,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
 @Service
-class LabService(private val labRepository: LabRepository, private val queueService: QueueService) {
+class LabService(private val labRepository: LabRepository) {
 
     fun save(lab: Lab): Lab {
         return labRepository.save(lab)
@@ -20,9 +20,26 @@ class LabService(private val labRepository: LabRepository, private val queueServ
             name = name,
             group = group,
             subject = subject,
-            queueType = QueueType.FIRST_PRIORITY
+            queueType = QueueType.FIRST_PRIORITY,
+            shortId = generateUniqueShortId()
         ))
         return lab
+    }
+
+    private fun generateUniqueShortId(): String {
+        val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        val idLength = 8
+        var shortId: String
+        do {
+            shortId = (1..idLength)
+                .map { alphabet.random() }
+                .joinToString("")
+        } while (labRepository.findByShortId(shortId) != null)
+        return shortId
+    }
+
+    fun findByShortId(id: String): Lab? {
+        return labRepository.findByShortId(id)
     }
 
     fun findById(id: Long?): Lab? {

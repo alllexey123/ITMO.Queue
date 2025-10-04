@@ -4,7 +4,7 @@ import jakarta.persistence.*
 import me.alllexey123.itmoqueue.model.enums.QueueType
 
 @Entity
-@Table(name = "labs")
+@Table(name = "labs", indexes = [Index(name = "idx_lab_shortid", columnList = "shortId", unique = true)])
 class Lab(
 
     @Id
@@ -25,4 +25,7 @@ class Lab(
 
     @ManyToOne(fetch = FetchType.EAGER)
     val subject: Subject,
+
+    @Column(unique = true, nullable = false, updatable = false)
+    var shortId: String? = null
 )
