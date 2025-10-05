@@ -11,6 +11,7 @@
             color: #333;
             margin: 0;
             padding: 20px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .container {
@@ -34,12 +35,14 @@
             border: 1px solid #ddd;
             border-radius: 12px;
             overflow: hidden;
+            font-size: ;
         }
 
         th, td {
-            padding: 12px;
+            padding: 12px 15px;
             border-bottom: 1px solid #ddd;
             text-align: left;
+            white-space: nowrap;
         }
 
         tr:last-child td {
@@ -51,18 +54,46 @@
         }
 
         .status-done {
-            color: green;
+            color: #28a745;
             font-weight: bold;
         }
 
         .status-in-queue {
-            color: #d9534f;
+            color: #dc3545;
             font-weight: bold;
         }
 
         .empty-queue {
             color: #777;
             font-style: italic;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            h2 {
+                font-size: 1.2em;
+            }
+
+            table {
+                font-size: 0.75em;
+            }
+
+            .table-wrapper {
+                overflow-x: auto;
+                margin: 0 -15px;
+                padding: 0 15px;
+            }
         }
     </style>
 </head>
@@ -76,29 +107,32 @@
         <p class="empty-queue">Очередь пока пуста.</p>
     </div>
 
-    <table th:if="${!entries.isEmpty()}">
-        <thead>
-        <tr>
-            <th>#</th>
-            <th>Никнейм</th>
-            <th>Попытка</th>
-            <th>Статус</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr th:each="entry, iterStat : ${entries}">
-            <td th:text="${iterStat.count}">1</td>
-            <td th:text="${entry.user.nickname ?: 'Без ника'}">nickname</td>
-            <td th:text="${entry.attemptNumber}">1</td>
-            <td>
+
+    <div class="table-wrapper" th:if="${!entries.isEmpty()}">
+        <table>
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Никнейм</th>
+                <th>Попытка</th>
+                <th>Статус</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="entry, iterStat : ${entries}">
+                <td th:text="${iterStat.count}">1</td>
+                <td th:text="${entry.user.nickname ?: 'Без ника'}">nickname</td>
+                <td th:text="${entry.attemptNumber}">1</td>
+                <td>
                     <span th:text="${entry.done ? 'Сдано' : 'В очереди'}"
                           th:class="${entry.done ? 'status-done' : 'status-in-queue'}">
                         Статус
                     </span>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 </body>
