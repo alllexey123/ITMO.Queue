@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 
 @Component
 class GroupListSubjectsCommand(
@@ -38,6 +39,8 @@ class GroupListSubjectsCommand(
     override fun handleCallback(context: CallbackContext) {
         when (val data = context.data) {
             is CallbackData.DeleteSubject -> handleDeleteSubject(context)
+            is CallbackData.DeleteSubjectConfirm -> handleDeleteSubjectConfirm(context)
+            is CallbackData.DeleteSubjectCancel -> handleDeleteSubjectCancel(context)
             is CallbackData.EditSubject -> handleEditSubject(context)
             is CallbackData.SelectSubject -> handleSelectSubject(context, data.subjectId)
             is CallbackData.ShowSubjectsList -> handleListSubjects(context)
@@ -49,9 +52,40 @@ class GroupListSubjectsCommand(
     fun handleDeleteSubject(context: CallbackContext) {
         if (!context.requireAdmin()) return
         val subject = getSubjectOrDelete(context) ?: return
-        subjectService.deleteById(subject.id!!)
-        updateListMessage(context.group!!, context.managedMessage!!)
+        val sendConfirmMessage = context.send()
+            .text("Вы *точно* хотите удалить этот предмет? Все лабы и очереди также будут безвозвратно удалены.")
+            .parseMode(ParseMode.MARKDOWN)
+            .replyMarkup(InlineKeyboardMarkup.builder().keyboardRow(
+                InlineKeyboardRow(
+                    inlineButton("Да", serialize(CallbackData.DeleteSubjectConfirm())),
+                    inlineButton("Нет", serialize(CallbackData.DeleteSubjectCancel()))
+                )
+            ).build())
+            .build()
+        val sentMessage = telegram.execute(sendConfirmMessage)
+        managedMessageService.register(
+            sentMessage = sentMessage,
+            type = MessageType.SUBJECT_DELETE_CONFIRM,
+            metadata = mutableMapOf("subject_id" to subject.id!!, "main_message_id" to context.messageId)
+        )
     }
+
+    fun handleDeleteSubjectCancel(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        context.deleteMessage()
+    }
+
+    fun handleDeleteSubjectConfirm(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val subject = getSubjectOrDelete(context) ?: return
+        subjectService.deleteById(subject.id!!)
+        context.answer("Предмет удалён.")
+        context.deleteMessage()
+        val mainMessageId = context.managedMessage!!.metadata.getInt("main_message_id")
+        val mainMessage = managedMessageService.findById(context.chatId, mainMessageId)
+        if (mainMessage?.messageType == MessageType.SUBJECT_DETAILS) updateListMessage(context.group!!, mainMessage)
+    }
+
 
     fun handleEditSubject(context: CallbackContext) {
         if (!context.requireAdmin()) return

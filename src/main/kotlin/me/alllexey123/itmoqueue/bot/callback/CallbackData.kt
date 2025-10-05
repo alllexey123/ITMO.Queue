@@ -8,6 +8,8 @@ sealed class CallbackData(val commandPrefix: String, val actionPrefix: String) {
     data class SelectLab(val labId: Long) : CallbackData("list_labs", "select")
     data class ShowLabsPage(val page: Int) : CallbackData("list_labs", "page")
     class DeleteLab : CallbackData("list_labs", "delete")
+    class DeleteLabConfirm : CallbackData("list_labs", "delete_confirm")
+    class DeleteLabCancel : CallbackData("list_labs", "delete_cancel")
     class AddToQueue : CallbackData("list_labs", "add_to_queue")
     class AddToQueueCancel : CallbackData("list_labs", "add_to_queue_cancel")
     class RemoveFromQueue : CallbackData("list_labs", "remove_from_queue")
@@ -21,6 +23,8 @@ sealed class CallbackData(val commandPrefix: String, val actionPrefix: String) {
     data class SelectSubject(val subjectId: Long) : CallbackData("list_subjects", "select")
     data class ShowSubjectsPage(val page: Int) : CallbackData("list_subjects", "page")
     class DeleteSubject : CallbackData("list_subjects", "delete")
+    class DeleteSubjectConfirm : CallbackData("list_subjects", "delete_confirm")
+    class DeleteSubjectCancel : CallbackData("list_subjects", "delete_cancel")
     class EditSubject : CallbackData("list_subjects", "edit")
     class ShowSubjectsList : CallbackData("list_subjects", "show_subjects_list")
 
@@ -40,6 +44,8 @@ class CallbackDataSerializer : ICallbackDataSerializer {
             is CallbackData.SelectLab -> "${data.labId}"
             is CallbackData.ShowLabsPage -> "${data.page}"
             is CallbackData.DeleteLab -> ""
+            is CallbackData.DeleteLabConfirm -> ""
+            is CallbackData.DeleteLabCancel -> ""
             is CallbackData.AddToQueue -> ""
             is CallbackData.AddToQueueCancel -> ""
             is CallbackData.RemoveFromQueue -> ""
@@ -52,6 +58,8 @@ class CallbackDataSerializer : ICallbackDataSerializer {
             is CallbackData.SelectSubject -> "${data.subjectId}"
             is CallbackData.ShowSubjectsPage -> "${data.page}"
             is CallbackData.DeleteSubject -> ""
+            is CallbackData.DeleteSubjectConfirm -> ""
+            is CallbackData.DeleteSubjectCancel -> ""
             is CallbackData.EditSubject -> ""
             is CallbackData.ShowSubjectsList -> ""
 
@@ -72,6 +80,8 @@ class CallbackDataSerializer : ICallbackDataSerializer {
             "list_labs:select" -> CallbackData.SelectLab(parts[0].toLong())
             "list_labs:page" -> CallbackData.ShowLabsPage(parts[0].toInt())
             "list_labs:delete" -> CallbackData.DeleteLab()
+            "list_labs:delete_confirm" -> CallbackData.DeleteLabConfirm()
+            "list_labs:delete_cancel" -> CallbackData.DeleteLabCancel()
             "list_labs:add_to_queue" -> CallbackData.AddToQueue()
             "list_labs:add_to_queue_cancel" -> CallbackData.AddToQueueCancel()
             "list_labs:remove_from_queue" -> CallbackData.RemoveFromQueue()
@@ -84,6 +94,8 @@ class CallbackDataSerializer : ICallbackDataSerializer {
             "list_subjects:select" -> CallbackData.SelectSubject(parts[0].toLong())
             "list_subjects:page" -> CallbackData.ShowSubjectsPage(parts[0].toInt())
             "list_subjects:delete" -> CallbackData.DeleteSubject()
+            "list_subjects:delete_confirm" -> CallbackData.DeleteSubjectConfirm()
+            "list_subjects:delete_cancel" -> CallbackData.DeleteSubjectCancel()
             "list_subjects:edit" -> CallbackData.EditSubject()
             "list_subjects:show_subjects_list" -> CallbackData.ShowSubjectsList()
 

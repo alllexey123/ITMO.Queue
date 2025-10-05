@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 
 @Component
 class GroupListLabsCommand(
@@ -39,6 +40,8 @@ class GroupListLabsCommand(
             is CallbackData.DeleteLab -> handleDeleteLab(context)
             is CallbackData.EditLab -> handleEditLab(context)
             is CallbackData.PinLab -> handlePinLab(context)
+            is CallbackData.DeleteLabConfirm -> handleDeleteLabConfirm(context)
+            is CallbackData.DeleteLabCancel -> handleDeleteLabCancel(context)
             else -> {}
         }
     }
@@ -46,7 +49,38 @@ class GroupListLabsCommand(
     fun handleDeleteLab(context: CallbackContext) {
         if (!context.requireAdmin()) return
         val lab = getLabOrDelete(context) ?: return
+        val sendConfirmMessage = context.send()
+            .text("Вы *точно* хотите удалить эту лабу? Очередь также будет безвозвратно удалена.")
+            .parseMode(ParseMode.MARKDOWN)
+            .replyMarkup(InlineKeyboardMarkup.builder().keyboardRow(
+                InlineKeyboardRow(
+                    inlineButton("Да", serialize(CallbackData.DeleteLabConfirm())),
+                    inlineButton("Нет", serialize(CallbackData.DeleteLabCancel()))
+                )
+            ).build())
+            .build()
+        val sentMessage = telegram.execute(sendConfirmMessage)
+        managedMessageService.register(
+            sentMessage = sentMessage,
+            type = MessageType.LAB_DELETE_CONFIRM,
+            metadata = mutableMapOf("lab_id" to lab.id!!, "main_message_id" to context.messageId)
+        )
+    }
+
+    fun handleDeleteLabCancel(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        context.deleteMessage()
+    }
+
+    fun handleDeleteLabConfirm(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val lab = getLabOrDelete(context) ?: return
         labService.deleteById(lab.id!!)
+        context.answer("Лаба удалена.")
+        context.deleteMessage()
+        val mainMessageId = context.managedMessage!!.metadata.getInt("main_message_id")
+        val mainMessage = managedMessageService.findById(context.chatId, mainMessageId)
+        if (mainMessage?.messageType == MessageType.LAB_DETAILS) updateListMessage(context.group!!, mainMessage)
     }
 
     fun handleEditLab(context: CallbackContext) {
