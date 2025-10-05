@@ -31,7 +31,7 @@ class ManagedMessage(
     var id: ManagedMessageId,
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 50)
     var messageType: MessageType,
 
     @JdbcTypeCode(SqlTypes.JSON)

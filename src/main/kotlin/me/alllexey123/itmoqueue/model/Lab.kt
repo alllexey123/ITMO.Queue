@@ -25,6 +25,7 @@ class Lab(
     val queueEntries: MutableList<QueueEntry> = mutableListOf(),
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 50)
     val queueType: QueueType,
 
     @ManyToOne(fetch = FetchType.EAGER)
