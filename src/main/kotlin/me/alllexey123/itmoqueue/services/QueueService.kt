@@ -8,6 +8,8 @@ import me.alllexey123.itmoqueue.repositories.QueueEntryRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.math.ln
+import kotlin.math.pow
 
 @Service
 class QueueService(
@@ -48,7 +50,21 @@ class QueueService(
                     else -> l1.createdAt.compareTo(l2.createdAt)
                 }
             }
-            QueueType.PRIORITY -> lab.queueEntries // todo later
+
+            QueueType.PRIORITY -> {
+                val weightAttempt = 600.0
+                val attemptPow= 0.7
+                val weightTime = 1.0 / 40.0
+
+                lab.queueEntries.sortedBy { entry ->
+                    val attemptPenalty = weightAttempt * ln(entry.attemptNumber.toDouble()).pow(attemptPow)
+
+                    val minutesDiff = (entry.createdAt.toEpochMilli() - lab.createdAt.toEpochMilli()) / 60.0 / 1000.0
+                    val timePenalty = minutesDiff * weightTime
+
+                    attemptPenalty + timePenalty
+                }
+            }
         }
     }
 

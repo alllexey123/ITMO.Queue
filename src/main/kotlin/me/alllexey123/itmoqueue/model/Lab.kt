@@ -2,9 +2,13 @@ package me.alllexey123.itmoqueue.model
 
 import jakarta.persistence.*
 import me.alllexey123.itmoqueue.model.enums.QueueType
+import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.jpa.domain.support.AuditingEntityListener
+import java.time.Instant
 
 @Entity
 @Table(name = "labs", indexes = [Index(name = "idx_lab_shortid", columnList = "shortId", unique = true)])
+@EntityListeners(AuditingEntityListener::class)
 class Lab(
 
     @Id
@@ -28,4 +32,8 @@ class Lab(
 
     @Column(unique = true, nullable = false, updatable = false)
     var shortId: String? = null
-)
+) {
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    var createdAt: Instant = Instant.now()
+}
