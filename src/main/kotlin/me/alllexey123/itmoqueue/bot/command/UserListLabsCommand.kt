@@ -86,6 +86,7 @@ class UserListLabsCommand(
         val text = telegramViewService.buildLabsListUserText(entries, realPage)
         val keyboard = telegramViewService.buildLabsListUserKeyboard(entries, realPage)
         val editMessage = managedMessage.edit()
+            .parseMode(ParseMode.MARKDOWN)
             .withTextAndInlineKeyboard(text, keyboard)
         telegram.execute(editMessage)
         managedMessage.metadata["labs_list_page"] = realPage
