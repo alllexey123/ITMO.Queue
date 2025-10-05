@@ -7,7 +7,6 @@ import me.alllexey123.itmoqueue.services.MembershipService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
-import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChatAdministrators
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.chatmember.ChatMemberUpdated
 
@@ -42,10 +41,10 @@ class MyChatMemberHandler(
         val membership = contextService.getMembership(chatId, from.id, from.userName)
         membershipService.resetMembershipTypes(membership.group)
         membership.type = Membership.Type.ADMIN
-        val admins = telegram.execute(GetChatAdministrators.builder().chatId(chatId).build())
-        admins.forEach { admin ->
-            contextService.getMembership(chatId, admin.user.id, admin.user.userName).type = Membership.Type.ADMIN
-        }
+//        val admins = telegram.execute(GetChatAdministrators.builder().chatId(chatId).build())
+//        admins.forEach { admin ->
+//            contextService.getMembership(chatId, admin.user.id, admin.user.userName).type = Membership.Type.ADMIN
+//        }
         val sendMessage = SendMessage.builder()
             .chatId(chatId)
             .parseMode(ParseMode.MARKDOWN)
@@ -53,8 +52,8 @@ class MyChatMemberHandler(
                 Привет 🙋
                 Я - бот для создания очередей на сдачу лабораторных работ в ИТМО.
                 Для начала основные моменты:
-                 • Некоторые команды доступны только *текущим* админам и участнику, который меня добавил.
-                   Чтобы обновить список админов, меня можно спокойно удалить и добавить обратно, данные не будут утеряны.
+                 • Некоторые команды доступны только участнику, который меня добавил (он считается админом).
+                   Чтобы изменить участника-администратора, меня можно спокойно удалить и добавить обратно, данные не будут утеряны.
                  • Я не вижу все сообщения (в целях вашей же анонимности), поэтому при настройке иногда надо отвечать на моё сообщение напрямую (например, при выборе названия лабы).
                  • Исходный код бота полностью открыт и находится [тут](https://github.com/alllexey123/ITMO.Queue)
                  
