@@ -356,7 +356,7 @@ class TelegramViewService(
                         val labPos = String.format("%2s", labs.indexOf(entry.lab))
                         val user = entry.user
                         val status = if (entry.done) Emoji.CHECK else Emoji.CANCEL
-                        appendLine("`$pos. `|${labPos}| $status` ${user.mention()} `[${entry.attemptNumber}]`")
+                        appendLine("`$pos. |${labPos}| $status` ${user.mention()} `[${entry.attemptNumber}]`")
                     }
                     if (entries.size > limited.size) {
                         print("_... и ещё ${entries.size - limited.size}_")
