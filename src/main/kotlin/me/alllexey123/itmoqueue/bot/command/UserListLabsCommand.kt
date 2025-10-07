@@ -49,7 +49,7 @@ class UserListLabsCommand(
     }
 
     override fun updateLabDetails(lab: Lab, managedMessage: ManagedMessage) {
-        val activeEntries = lab.queueEntries.filter { !it.done }
+        val activeEntries = queueService.sortedEntries(lab).filter { !it.done }
         val text = telegramViewService.buildLabDetailsText(lab, activeEntries)
         val keyboard = telegramViewService.buildLabDetailUserKeyboard(lab)
         val editMessage = managedMessage.edit()
