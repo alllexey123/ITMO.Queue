@@ -31,7 +31,7 @@ class Subject (
     @Column(nullable = true, length = 50)
     val mergedQueueType: MergedQueueType? = null, // if null then merged queue is disabled
 
-    @Column(unique = true, nullable = false, updatable = false)
+    @Column(unique = true, nullable = false, updatable = true)
     var shortId: String? = null
 ) {
     fun isMergedQueueEnabled() = mergedQueueType != null

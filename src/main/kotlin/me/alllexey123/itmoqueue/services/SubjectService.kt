@@ -36,7 +36,7 @@ class SubjectService(private val subjectRepository: SubjectRepository) {
 
     fun generateUniqueShortIdForSubjects() {
         subjectRepository.findAll().forEach { subject -> {
-            if (subject.shortId == null) {
+            if (subject.shortId.isNullOrBlank()) {
                 subject.shortId = generateUniqueShortId()
                 subjectRepository.save(subject)
             }
