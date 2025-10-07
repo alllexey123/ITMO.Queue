@@ -29,7 +29,10 @@ class Subject (
 
     @Enumerated(value = EnumType.STRING, )
     @Column(nullable = true, length = 50)
-    val mergedQueueType: MergedQueueType? = null // if null then merged queue is disabled
+    val mergedQueueType: MergedQueueType? = null, // if null then merged queue is disabled
+
+    @Column(unique = true, nullable = false, updatable = false)
+    var shortId: String? = null
 ) {
     fun isMergedQueueEnabled() = mergedQueueType != null
 }

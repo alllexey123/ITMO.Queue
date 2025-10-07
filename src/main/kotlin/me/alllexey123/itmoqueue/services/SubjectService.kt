@@ -16,9 +16,31 @@ class SubjectService(private val subjectRepository: SubjectRepository) {
     fun create(group: Group, name: String): Subject {
         val subject = save(Subject(
             name = name,
-            group = group
+            group = group,
+            shortId = generateUniqueShortId()
         ))
         return subject
+    }
+
+    private fun generateUniqueShortId(): String {
+        val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        val idLength = 8
+        var shortId: String
+        do {
+            shortId = (1..idLength)
+                .map { alphabet.random() }
+                .joinToString("")
+        } while (subjectRepository.findByShortId(shortId) != null)
+        return shortId
+    }
+
+    fun generateUniqueShortIdForSubjects() {
+        subjectRepository.findAll().forEach { subject -> {
+            if (subject.shortId == null) {
+                subject.shortId = generateUniqueShortId()
+                subjectRepository.save(subject)
+            }
+        } }
     }
 
     fun findById(id: Long?): Subject? {
