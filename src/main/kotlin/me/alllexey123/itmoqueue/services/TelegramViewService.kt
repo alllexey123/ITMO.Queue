@@ -119,7 +119,7 @@ class TelegramViewService(
         }
 
         val selectKeys =
-            types.mapIndexed { i, type -> inlineButton("$i", serialize(CallbackData.LabQueueTypeSelect(type))) }
+            types.mapIndexed { i, type -> inlineButton("${i + 1}", serialize(CallbackData.LabQueueTypeSelect(type))) }
 
         val keyboard = InlineKeyboardMarkup.builder()
             .keyboard(
@@ -141,14 +141,14 @@ class TelegramViewService(
             appendLine("——————————————")
             appendLine("Выберите один из представленных ниже типов очереди: ")
             types.forEachIndexed { i, type ->
-                val pos = String.format("%2s", i + 1)
+                val pos = String.format("%s", i + 1)
                 appendLine("*${pos}. ${type.ruTitle}*")
                 appendLine(type.ruDescription)
             }
         }
 
         val selectKeys =
-            types.mapIndexed { i, type -> inlineButton("$i", serialize(CallbackData.MergedQueueTypeSelect(type))) }
+            types.mapIndexed { i, type -> inlineButton("${i + 1}", serialize(CallbackData.MergedQueueTypeSelect(type))) }
 
         val keyboard = InlineKeyboardMarkup.builder()
             .keyboard(
