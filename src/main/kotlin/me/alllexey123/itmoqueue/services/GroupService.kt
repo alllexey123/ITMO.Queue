@@ -1,6 +1,5 @@
 package me.alllexey123.itmoqueue.services
 
-import jakarta.transaction.Transactional
 import me.alllexey123.itmoqueue.model.Group
 import me.alllexey123.itmoqueue.repositories.GroupRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -26,30 +25,33 @@ class GroupService(private val groupRepository: GroupRepository, private val tel
         return groupRepository.findByChatId(chatId)
     }
 
-    fun getOrCreateByChatId(chatId: Long): Group {
+    fun getOrCreateByChatIdAndName(chatId: Long, name: String?): Group {
         val group = findByChatId(chatId)
         if (group == null) {
             return save(
                 Group(
-                    name = null,
+                    name = name,
                     chatId = chatId
                 )
             )
+        } else {
+            if (group.name == null) {
+                group.name = name
+                return save(group)
+            }
         }
         return group
     }
 
-    @Transactional
     fun refreshGroupNames() {
         findAll().forEach { group ->
-                {
-                    try {
-                        val getGroupInfo = GetChat.builder().chatId(group.chatId).build()
-                        val res = telegram.execute(getGroupInfo)
-                        group.name = res.title
-                    } catch (e: Exception) {
-                    }
-                }
+            try {
+                val getGroupInfo = GetChat.builder().chatId(group.chatId).build()
+                val res = telegram.execute(getGroupInfo)
+                group.name = res.title
+                save(group)
+            } catch (e: Exception) {
             }
+        }
     }
 }

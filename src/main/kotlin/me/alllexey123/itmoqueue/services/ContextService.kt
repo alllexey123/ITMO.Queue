@@ -28,24 +28,24 @@ class ContextService(
     }
 
 
-    fun getGroup(chatId: Long): Group {
-        return groupService.getOrCreateByChatId(chatId)
+    fun getGroup(chatId: Long, name: String?): Group {
+        return groupService.getOrCreateByChatIdAndName(chatId, name)
     }
 
     fun getGroup(message: Message): Group {
-        return getGroup(message.chatId)
+        return getGroup(message.chatId, message.chat.title)
     }
 
     fun getGroup(message: MaybeInaccessibleMessage): Group {
-        return getGroup(message.chatId)
+        return getGroup(message.chatId, message.chat.title)
     }
 
-    fun getMembership(chatId: Long, telegramId: Long, telegramName: String?): Membership {
+    fun getMembership(chatId: Long, chatName: String, telegramId: Long, telegramName: String?): Membership {
 
         val found = membershipService.findByChatIdAndUserId(chatId, telegramId)
         return found ?: membershipService.save(
             Membership(
-                group = getGroup(chatId),
+                group = getGroup(chatId, chatName),
                 user = getUser(telegramId, telegramName),
                 type = Membership.Type.MEMBER
             )
@@ -54,11 +54,16 @@ class ContextService(
 
     fun getMembership(message: Message): Membership? {
         if (message.isUserMessage) return null
-        return getMembership(message.chatId, message.from.id, message.from.userName)
+        return getMembership(message.chatId, message.chat.title, message.from.id, message.from.userName)
     }
 
     fun getMembership(callbackQuery: CallbackQuery): Membership? {
         if (callbackQuery.message.isUserMessage) return null
-        return getMembership(callbackQuery.message.chatId, callbackQuery.from.id, callbackQuery.from.userName)
+        return getMembership(
+            callbackQuery.message.chatId,
+            callbackQuery.message.chat.title,
+            callbackQuery.from.id,
+            callbackQuery.from.userName
+        )
     }
 }

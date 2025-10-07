@@ -21,7 +21,7 @@ class EnterSubjectNameState(
     override fun handle(context: MessageContext): Boolean {
         if (!context.requireAdmin(telegram)) return false
         val subjectName = context.text.trim()
-        val group = groupService.getOrCreateByChatId(context.chatId)
+        val group = groupService.getOrCreateByChatIdAndName(context.chatId, context.message.chat.title)
 
         val sendMessage = context.sendReply()
 
