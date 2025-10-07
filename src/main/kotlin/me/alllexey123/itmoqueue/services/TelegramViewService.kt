@@ -113,7 +113,7 @@ class TelegramViewService(
             appendLine("Выберите один из представленных ниже типов очереди: ")
             types.forEachIndexed { i, type ->
                 val pos = String.format("%2s", i + 1)
-                appendLine("${pos}. ${type.ruTitle}")
+                appendLine("*${pos}. ${type.ruTitle}*")
                 appendLine(type.ruDescription)
             }
         }
@@ -142,7 +142,7 @@ class TelegramViewService(
             appendLine("Выберите один из представленных ниже типов очереди: ")
             types.forEachIndexed { i, type ->
                 val pos = String.format("%2s", i + 1)
-                appendLine("${pos}. ${type.ruTitle}")
+                appendLine("*${pos}. ${type.ruTitle}*")
                 appendLine(type.ruDescription)
             }
         }
