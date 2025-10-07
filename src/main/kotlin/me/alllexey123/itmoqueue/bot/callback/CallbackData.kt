@@ -1,5 +1,7 @@
 package me.alllexey123.itmoqueue.bot.callback
 
+import me.alllexey123.itmoqueue.model.enums.MergedQueueType
+import me.alllexey123.itmoqueue.model.enums.QueueType
 import org.springframework.stereotype.Component
 
 sealed class CallbackData(val commandPrefix: String, val actionPrefix: String) {
@@ -18,6 +20,8 @@ sealed class CallbackData(val commandPrefix: String, val actionPrefix: String) {
     class PinLab : CallbackData("list_labs", "pin_lab")
     class EditLab : CallbackData("list_labs", "edit_lab")
     data class SelectAttemptNumber(val attempt: Int) : CallbackData("list_labs", "select_attempt_number")
+    class LabQueueTypeAsk : CallbackData("list_labs", "queue_type_ask")
+    data class LabQueueTypeSelect(val type: QueueType) : CallbackData("list_labs", "queue_type_select")
 
     // list_subjects
     data class SelectSubject(val subjectId: Long) : CallbackData("list_subjects", "select")
@@ -27,6 +31,9 @@ sealed class CallbackData(val commandPrefix: String, val actionPrefix: String) {
     class DeleteSubjectCancel : CallbackData("list_subjects", "delete_cancel")
     class EditSubject : CallbackData("list_subjects", "edit")
     class ShowSubjectsList : CallbackData("list_subjects", "show_subjects_list")
+    class ShowSubjectLabsList : CallbackData("list_subjects", "show_subject_labs_list")
+    class MergedQueueTypeAsk : CallbackData("list_subjects", "merged_queue_type_ask")
+    data class MergedQueueTypeSelect(val type: MergedQueueType?) : CallbackData("list_subjects", "merged_queue_type_select")
 
     // new_lab
     data class NewLabPickSubject(val subjectId: Long) : CallbackData("new_lab", "pick_subject")
@@ -54,6 +61,8 @@ class CallbackDataSerializer : ICallbackDataSerializer {
             is CallbackData.PinLab -> ""
             is CallbackData.EditLab -> ""
             is CallbackData.SelectAttemptNumber -> "${data.attempt}"
+            is CallbackData.LabQueueTypeAsk -> ""
+            is CallbackData.LabQueueTypeSelect -> data.type.name
 
             is CallbackData.SelectSubject -> "${data.subjectId}"
             is CallbackData.ShowSubjectsPage -> "${data.page}"
@@ -62,6 +71,9 @@ class CallbackDataSerializer : ICallbackDataSerializer {
             is CallbackData.DeleteSubjectCancel -> ""
             is CallbackData.EditSubject -> ""
             is CallbackData.ShowSubjectsList -> ""
+            is CallbackData.ShowSubjectLabsList -> ""
+            is CallbackData.MergedQueueTypeAsk -> ""
+            is CallbackData.MergedQueueTypeSelect -> data.type?.name ?: ""
 
             is CallbackData.NewLabPickSubject -> "${data.subjectId}"
             is CallbackData.NewLabSubjectsPage -> "${data.page}"
@@ -90,6 +102,8 @@ class CallbackDataSerializer : ICallbackDataSerializer {
             "list_labs:pin_lab" -> CallbackData.PinLab()
             "list_labs:edit_lab" -> CallbackData.EditLab()
             "list_labs:select_attempt_number" -> CallbackData.SelectAttemptNumber(parts[0].toInt())
+            "list_labs:queue_type_ask" -> CallbackData.LabQueueTypeAsk()
+            "list_labs:queue_type_select" -> CallbackData.LabQueueTypeSelect(QueueType.valueOf(parts[0]))
 
             "list_subjects:select" -> CallbackData.SelectSubject(parts[0].toLong())
             "list_subjects:page" -> CallbackData.ShowSubjectsPage(parts[0].toInt())
@@ -98,6 +112,9 @@ class CallbackDataSerializer : ICallbackDataSerializer {
             "list_subjects:delete_cancel" -> CallbackData.DeleteSubjectCancel()
             "list_subjects:edit" -> CallbackData.EditSubject()
             "list_subjects:show_subjects_list" -> CallbackData.ShowSubjectsList()
+            "list_subjects:show_subject_labs_list" -> CallbackData.ShowSubjectLabsList()
+            "list_subjects:merged_queue_type_ask" -> CallbackData.MergedQueueTypeAsk()
+            "list_subjects:merged_queue_type_select" -> CallbackData.MergedQueueTypeSelect(parts.getOrNull(0)?.let { MergedQueueType.valueOf(it) })
 
             "new_lab:pick_subject" -> CallbackData.NewLabPickSubject(parts[0].toLong())
             "new_lab:subjects_page" -> CallbackData.NewLabSubjectsPage(parts[0].toInt())

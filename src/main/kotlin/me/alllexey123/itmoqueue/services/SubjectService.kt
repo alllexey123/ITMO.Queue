@@ -1,5 +1,6 @@
 package me.alllexey123.itmoqueue.services
 
+import me.alllexey123.itmoqueue.ItmoQueueProperties
 import me.alllexey123.itmoqueue.model.Group
 import me.alllexey123.itmoqueue.model.Subject
 import me.alllexey123.itmoqueue.repositories.SubjectRepository
@@ -7,7 +8,9 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
 @Service
-class SubjectService(private val subjectRepository: SubjectRepository) {
+class SubjectService(private val subjectRepository: SubjectRepository,
+                     private val itmoQueueProperties: ItmoQueueProperties
+) {
 
     fun save(subject: Subject): Subject {
         return subjectRepository.save(subject)
@@ -32,6 +35,10 @@ class SubjectService(private val subjectRepository: SubjectRepository) {
                 .joinToString("")
         } while (subjectRepository.findByShortId(shortId) != null)
         return shortId
+    }
+
+    fun getSubjectUrl(subject: Subject): String {
+        return "${itmoQueueProperties.origin}/subject/${subject.shortId}"
     }
 
     fun findById(id: Long?): Subject? {

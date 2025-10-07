@@ -14,6 +14,7 @@ import me.alllexey123.itmoqueue.model.Group
 import me.alllexey123.itmoqueue.model.Lab
 import me.alllexey123.itmoqueue.model.ManagedMessage
 import me.alllexey123.itmoqueue.model.enums.MessageType
+import me.alllexey123.itmoqueue.model.enums.QueueType
 import me.alllexey123.itmoqueue.services.*
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.ParseMode
@@ -36,14 +37,35 @@ class GroupListLabsCommand(
 
     override fun handleCallback(context: CallbackContext) {
         super.handleCallback(context)
-        when (context.data) {
+        when (val data = context.data) {
             is CallbackData.DeleteLab -> handleDeleteLab(context)
             is CallbackData.EditLab -> handleEditLab(context)
             is CallbackData.PinLab -> handlePinLab(context)
             is CallbackData.DeleteLabConfirm -> handleDeleteLabConfirm(context)
             is CallbackData.DeleteLabCancel -> handleDeleteLabCancel(context)
+            is CallbackData.LabQueueTypeAsk -> handleLabQueueTypeAsk(context)
+            is CallbackData.LabQueueTypeSelect -> handleLabQueueTypeSelect(context, data.type)
             else -> {}
         }
+    }
+
+    fun handleLabQueueTypeAsk(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val lab = getLabOrDelete(context) ?: return
+        val view = telegramViewService.buildLabQueueTypeSelectView(lab)
+        val text = view.first
+        val keyboard = view.second
+        val editMessage = context.managedMessage!!.edit()
+            .parseMode(ParseMode.MARKDOWN)
+            .withTextAndInlineKeyboard(text, keyboard)
+        telegram.execute(editMessage)
+    }
+
+    fun handleLabQueueTypeSelect(context: CallbackContext, type: QueueType) {
+        if (!context.requireAdmin()) return
+        val lab = getLabOrDelete(context) ?: return
+        lab.queueType = type
+        updateLabDetails(lab, context.managedMessage!!)
     }
 
     fun handleDeleteLab(context: CallbackContext) {

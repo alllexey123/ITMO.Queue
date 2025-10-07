@@ -7,10 +7,13 @@ import me.alllexey123.itmoqueue.bot.callback.ICallbackDataSerializer
 import me.alllexey123.itmoqueue.bot.command.GroupNewLabCommand
 import me.alllexey123.itmoqueue.bot.command.GroupNewSubjectCommand
 import me.alllexey123.itmoqueue.bot.extensions.inlineButton
+import me.alllexey123.itmoqueue.bot.extensions.inlineRowButton
 import me.alllexey123.itmoqueue.model.Lab
 import me.alllexey123.itmoqueue.model.QueueEntry
 import me.alllexey123.itmoqueue.model.Subject
 import me.alllexey123.itmoqueue.model.User
+import me.alllexey123.itmoqueue.model.enums.MergedQueueType
+import me.alllexey123.itmoqueue.model.enums.QueueType
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
@@ -24,7 +27,9 @@ private const val perRow = 3
 @Component
 class TelegramViewService(
     private val callbackDataSerializer: CallbackDataSerializer,
-    private val labService: LabService
+    private val labService: LabService,
+    private val subjectService: SubjectService,
+    private val queueService: QueueService
 ) : ICallbackDataSerializer by callbackDataSerializer {
 
     fun buildLabDetailsText(lab: Lab?, entries: List<QueueEntry>?): String {
@@ -90,9 +95,71 @@ class TelegramViewService(
                     )
                 )
             )
+            rows.add(
+                inlineRowButton("Изменить тип очереди", serialize(CallbackData.LabQueueTypeAsk()))
+            )
         }
 
         return InlineKeyboardMarkup(rows)
+    }
+
+    fun buildLabQueueTypeSelectView(lab: Lab): Pair<String, InlineKeyboardMarkup> {
+        val types = QueueType.entries.toTypedArray()
+
+        val text = buildString {
+            appendLine("Лаба *${lab.name}*")
+            appendLine("Предмет: *${lab.subject.name}*")
+            appendLine("——————————————")
+            appendLine("Выберите один из представленных ниже типов очереди: ")
+            types.forEachIndexed { i, type ->
+                val pos = String.format("%2s", i + 1)
+                appendLine("${pos}. ${type.ruTitle}")
+                appendLine(type.ruDescription)
+            }
+        }
+
+        val selectKeys =
+            types.mapIndexed { i, type -> inlineButton("$i", serialize(CallbackData.LabQueueTypeSelect(type))) }
+
+        val keyboard = InlineKeyboardMarkup.builder()
+            .keyboard(
+                listOf(
+                    InlineKeyboardRow(selectKeys),
+                    inlineRowButton(Emoji.BACK, serialize(CallbackData.SelectLab(lab.id!!))),
+                )
+            ).build()
+
+        return text to keyboard
+    }
+
+    fun buildSubjectQueueTypeSelectView(subject: Subject): Pair<String, InlineKeyboardMarkup> {
+        val types = MergedQueueType.entries.toTypedArray()
+
+        val text = buildString {
+            appendLine("Предмет: *${subject.name}*")
+            appendLine("Тип очереди: *${subject.mergedQueueType?.ruTitle ?: "отключена"}*")
+            appendLine("——————————————")
+            appendLine("Выберите один из представленных ниже типов очереди: ")
+            types.forEachIndexed { i, type ->
+                val pos = String.format("%2s", i + 1)
+                appendLine("${pos}. ${type.ruTitle}")
+                appendLine(type.ruDescription)
+            }
+        }
+
+        val selectKeys =
+            types.mapIndexed { i, type -> inlineButton("$i", serialize(CallbackData.MergedQueueTypeSelect(type))) }
+
+        val keyboard = InlineKeyboardMarkup.builder()
+            .keyboard(
+                listOf(
+                    InlineKeyboardRow(selectKeys),
+                    inlineRowButton("Отключить очередь", serialize(CallbackData.MergedQueueTypeSelect(null))),
+                    inlineRowButton(Emoji.BACK, serialize(CallbackData.SelectSubject(subject.id!!))),
+                )
+            ).build()
+
+        return text to keyboard
     }
 
     fun buildLabDetailUserKeyboard(lab: Lab?): InlineKeyboardMarkup {
@@ -264,16 +331,42 @@ class TelegramViewService(
             return "Предмет не найден"
         }
 
-        return buildString {
-            appendLine("Предмет \"*${subject.name}*\"")
+        val dtf = DateTimeFormatter.ofPattern("HH:mm:ss")
 
-            if (subject.labs.isEmpty()) {
-                appendLine("Лабораторных работ пока не было")
-            } else {
-                appendLine("Лабы: ")
-                subject.labs.forEachIndexed { i, labWork ->
-                    appendLine("${i + 1}. ${labWork.name}")
+        return buildString {
+            appendLine("Предмет: *${subject.name}*")
+            if (subject.isMergedQueueEnabled()) {
+                appendLine("Тип очереди: *${subject.mergedQueueType!!.ruTitle}*")
+                val entries = queueService.sortedEntries(subject).filter { !it.done }
+                val limited = entries.take(15)
+                val labs = limited.map { it.lab }.distinct()
+                appendLine("——————————————")
+                labs.forEachIndexed { i, lab ->
+                    val pos = String.format("%2s", i + 1)
+                    appendLine("${pos}. ${lab.name}")
                 }
+                appendLine("——————————————")
+
+
+                if (limited.isEmpty()) {
+                    appendLine("Очередь пуста")
+                } else {
+                    limited.forEachIndexed { i, entry ->
+                        val pos = String.format("%2s", i + 1)
+                        val labPos = String.format("%2s", labs.indexOf(entry.lab))
+                        val user = entry.user
+                        val status = if (entry.done) Emoji.CHECK else Emoji.CANCEL
+                        appendLine("`$pos. `|${labPos}| $status` ${user.mention()} `[${entry.attemptNumber}]`")
+                    }
+                    if (entries.size > limited.size) {
+                        print("_... и ещё ${entries.size - limited.size}_")
+                    }
+                }
+                appendLine("——————————————")
+                appendLine("Обновлено: ${dtf.format(LocalTime.now())}\n")
+                appendLine("[Ссылка](${subjectService.getSubjectUrl(subject)}) на полную очередь")
+            } else {
+                appendLine("*Очередь отключена*")
             }
         }
     }
@@ -286,10 +379,57 @@ class TelegramViewService(
         val rows = mutableListOf<InlineKeyboardRow>()
         rows.add(
             InlineKeyboardRow(
+                inlineButton(Emoji.BACK, serialize(CallbackData.ShowSubjectsList())),
+                inlineButton(Emoji.EDIT, serialize(CallbackData.EditSubject())),
+                inlineButton(Emoji.DELETE, serialize(CallbackData.DeleteSubject()))
+            )
+        )
+
+        rows.add(
+            InlineKeyboardRow(
+                inlineButton("Настроить очередь", serialize(CallbackData.MergedQueueTypeAsk())),
+            )
+        )
+
+        rows.add(
+            InlineKeyboardRow(
+                inlineButton("Лабы", serialize(CallbackData.ShowSubjectLabsList())),
+            )
+        )
+
+        return InlineKeyboardMarkup.builder().keyboard(rows).build()
+    }
+
+
+    fun buildSubjectLabListText(subject: Subject?): String {
+        if (subject == null) {
+            return "Предмет не найден"
+        }
+
+        return buildString {
+            appendLine("Предмет: *${subject.name}*")
+            if (subject.labs.isEmpty()) {
+                appendLine("Лабораторных работ пока не было")
+            } else {
+                appendLine("Лабы: ")
+                subject.labs.forEachIndexed { i, labWork ->
+                    val pos = String.format("%2s", i + 1)
+                    appendLine("$pos. ${labWork.name}")
+                }
+            }
+        }
+    }
+
+    fun buildSubjectLabListKeyboard(subject: Subject?): InlineKeyboardMarkup {
+        if (subject == null) {
+            return InlineKeyboardMarkup.builder().build()
+        }
+
+        val rows = mutableListOf<InlineKeyboardRow>()
+        rows.add(
+            InlineKeyboardRow(
                 listOf(
-                    inlineButton(Emoji.BACK, serialize(CallbackData.ShowSubjectsList())),
-                    inlineButton(Emoji.EDIT, serialize(CallbackData.EditSubject())),
-                    inlineButton(Emoji.DELETE, serialize(CallbackData.DeleteSubject())),
+                    inlineButton(Emoji.BACK, serialize(CallbackData.SelectSubject(subject.id!!))),
                 )
             )
         )

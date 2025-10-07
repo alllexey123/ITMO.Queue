@@ -10,6 +10,7 @@ import me.alllexey123.itmoqueue.bot.state.StateManager
 import me.alllexey123.itmoqueue.model.Group
 import me.alllexey123.itmoqueue.model.ManagedMessage
 import me.alllexey123.itmoqueue.model.Subject
+import me.alllexey123.itmoqueue.model.enums.MergedQueueType
 import me.alllexey123.itmoqueue.model.enums.MessageType
 import me.alllexey123.itmoqueue.services.ManagedMessageService
 import me.alllexey123.itmoqueue.services.SubjectService
@@ -45,8 +46,36 @@ class GroupListSubjectsCommand(
             is CallbackData.SelectSubject -> handleSelectSubject(context, data.subjectId)
             is CallbackData.ShowSubjectsList -> handleListSubjects(context)
             is CallbackData.ShowSubjectsPage -> handleSubjectsListPage(context, data.page)
+            is CallbackData.ShowSubjectLabsList -> handleShowSubjectLabList(context)
+            is CallbackData.MergedQueueTypeAsk -> handleMergedQueueTypeAsk(context)
+            is CallbackData.MergedQueueTypeSelect -> handleMergedQueueTypeSelect(context, data.type)
             else -> {}
         }
+    }
+
+    fun handleShowSubjectLabList(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val subject = getSubjectOrDelete(context) ?: return
+        updateSubjectLabList(subject, context.managedMessage!!)
+    }
+
+    fun handleMergedQueueTypeAsk(context: CallbackContext) {
+        if (!context.requireAdmin()) return
+        val subject = getSubjectOrDelete(context) ?: return
+        val view = telegramViewService.buildSubjectQueueTypeSelectView(subject)
+        val text = view.first
+        val keyboard = view.second
+        val editMessage = context.managedMessage!!.edit()
+            .parseMode(ParseMode.MARKDOWN)
+            .withTextAndInlineKeyboard(text, keyboard)
+        telegram.execute(editMessage)
+    }
+
+    fun handleMergedQueueTypeSelect(context: CallbackContext, type: MergedQueueType?) {
+        if (!context.requireAdmin()) return
+        val subject = getSubjectOrDelete(context) ?: return
+        subject.mergedQueueType = type
+        updateSubjectDetails(subject, context.managedMessage!!)
     }
 
     fun handleDeleteSubject(context: CallbackContext) {
@@ -85,7 +114,6 @@ class GroupListSubjectsCommand(
         val mainMessage = managedMessageService.findById(context.chatId, mainMessageId)
         if (mainMessage?.messageType == MessageType.SUBJECT_DETAILS) updateListMessage(context.group!!, mainMessage)
     }
-
 
     fun handleEditSubject(context: CallbackContext) {
         if (!context.requireAdmin()) return
@@ -128,6 +156,17 @@ class GroupListSubjectsCommand(
         telegram.execute(editMessage)
         managedMessage.metadata["subject_id"] = subject.id!!
         managedMessage.messageType = MessageType.SUBJECT_DETAILS
+    }
+
+    fun updateSubjectLabList(subject: Subject, managedMessage: ManagedMessage) {
+        val text = telegramViewService.buildSubjectLabListText(subject)
+        val keyboard = telegramViewService.buildSubjectLabListKeyboard(subject)
+        val editMessage = managedMessage.edit()
+            .parseMode(ParseMode.MARKDOWN)
+            .withTextAndInlineKeyboard(text, keyboard)
+        telegram.execute(editMessage)
+        managedMessage.metadata["subject_id"] = subject.id!!
+        managedMessage.messageType = MessageType.SUBJECT_LAB_LIST
     }
 
     fun updateListMessage(group: Group, managedMessage: ManagedMessage, page: Int? = null) {

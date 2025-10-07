@@ -1,8 +1,8 @@
 package me.alllexey123.itmoqueue.model.enums
 
 enum class QueueType(
-    private val ruTitle: String,
-    private val ruDescription: String,
+    val ruTitle: String,
+    val ruDescription: String,
 ) {
     SIMPLE(
         "По времени добавления",

@@ -1,8 +1,8 @@
 package me.alllexey123.itmoqueue.model.enums
 
 enum class MergedQueueType(
-    private val ruTitle: String,
-    private val ruDescription: String,
+    val ruTitle: String,
+    val ruDescription: String,
 ) {
     SIMPLE(
         "Общий список по времени",

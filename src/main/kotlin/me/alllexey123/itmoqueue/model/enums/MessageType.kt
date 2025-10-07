@@ -8,5 +8,6 @@ enum class MessageType {
     LAB_DELETE_CONFIRM,
     SUBJECT_LIST,
     SUBJECT_DETAILS,
+    SUBJECT_LAB_LIST,
     SUBJECT_DELETE_CONFIRM,
 }
