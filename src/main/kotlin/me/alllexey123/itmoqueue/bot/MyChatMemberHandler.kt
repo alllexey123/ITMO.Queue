@@ -38,7 +38,7 @@ class MyChatMemberHandler(
         if (update.chat.isUserChat) {
             return
         }
-        val membership = contextService.getMembership(chatId, from.id, from.userName)
+        val membership = contextService.getMembership(chatId, update.chat.title, from.id, from.userName)
         membershipService.resetMembershipTypes(membership.group)
         membership.type = Membership.Type.ADMIN
 //        val admins = telegram.execute(GetChatAdministrators.builder().chatId(chatId).build())
