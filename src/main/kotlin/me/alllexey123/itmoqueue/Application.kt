@@ -3,7 +3,6 @@ package me.alllexey123.itmoqueue
 import jakarta.annotation.PostConstruct
 import me.alllexey123.itmoqueue.bot.TelegramBot
 import me.alllexey123.itmoqueue.services.GroupService
-import me.alllexey123.itmoqueue.services.SubjectService
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing
@@ -14,8 +13,7 @@ import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication
 class Application(
 	private val telegramBot: TelegramBot,
 	private val itmoQueueProperties: ItmoQueueProperties,
-	private val groupService: GroupService,
-	private val subjectService: SubjectService
+	private val groupService: GroupService
 ) {
 	lateinit var telegramApp: TelegramBotsLongPollingApplication
 
@@ -24,7 +22,6 @@ class Application(
 		telegramApp = TelegramBotsLongPollingApplication()
 		telegramApp.registerBot(itmoQueueProperties.botToken, telegramBot)
 
-		subjectService.generateUniqueShortIdForSubjects()
 		groupService.refreshGroupNames()
 	}
 
