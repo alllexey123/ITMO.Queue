@@ -12,15 +12,18 @@ class Group(
 
     var name: String?,
 
-    @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
-    val members: MutableSet<Membership> = mutableSetOf(),
-
-    @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
-    val labs: MutableList<Lab> = mutableListOf(),
-
     @Column(unique = true, nullable = false)
     val chatId: Long,
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
+    val members: MutableSet<Membership> = mutableSetOf(),
+
+    @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
     val subjects: MutableList<Subject> = mutableListOf(),
+
+    @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
+    val labs: MutableList<Lab> = mutableListOf(),
+
+    @OneToOne(mappedBy = "group", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    var settings: GroupSettings? = null
 )
