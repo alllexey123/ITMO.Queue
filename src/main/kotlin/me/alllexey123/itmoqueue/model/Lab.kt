@@ -26,7 +26,7 @@ class Lab(
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
-    var queueType: QueueType,
+    var queueType: QueueType = QueueType.SIMPLE,
 
     @ManyToOne(fetch = FetchType.EAGER)
     val subject: Subject,

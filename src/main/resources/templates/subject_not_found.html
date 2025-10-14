@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Ошибка: Предмет не найден</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; text-align: center; padding-top: 50px; color: #555; }
+    h1 { color: #d9534f; }
+    code { background-color: #eee; padding: 2px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+<h1>Предмет не найдена</h1>
+<p>Не удалось найти предмет с идентификатором: <code th:text="${shortId}">ID</code></p>
+<p>Скорее всего, ссылка устарела</p>
+</body>
+</html>

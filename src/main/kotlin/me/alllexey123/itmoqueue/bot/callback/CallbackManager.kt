@@ -1,43 +1,23 @@
 package me.alllexey123.itmoqueue.bot.callback
 
-import jakarta.annotation.PostConstruct
 import jakarta.transaction.Transactional
 import me.alllexey123.itmoqueue.bot.Scope
-import me.alllexey123.itmoqueue.bot.command.GroupListLabsCommand
-import me.alllexey123.itmoqueue.bot.command.GroupListSubjectsCommand
-import me.alllexey123.itmoqueue.bot.command.GroupNewLabCommand
-import me.alllexey123.itmoqueue.bot.command.UserListLabsCommand
 import me.alllexey123.itmoqueue.bot.state.StateManager
 import me.alllexey123.itmoqueue.services.ContextService
 import me.alllexey123.itmoqueue.services.ManagedMessageService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery
 
 @Component
 class CallbackManager(
-    private val groupListSubjectsCommand: GroupListSubjectsCommand,
-    private val groupNewLabCommand: GroupNewLabCommand,
-    private val groupListLabsCommand: GroupListLabsCommand,
     private val stateManager: StateManager,
     private val contextService: ContextService,
-    private val userListLabsCommand: UserListLabsCommand,
-    private val callbackDataSerializer: CallbackDataSerializer,
     private val managedMessageService: ManagedMessageService,
-    private val telegram: Telegram
+    private val telegram: Telegram,
+    private val handlers: List<CallbackHandler>
 ) {
-
-    lateinit var handlers: List<CallbackHandler>
-
-    @PostConstruct
-    fun init() {
-        handlers = listOf(
-            groupListSubjectsCommand,
-            groupNewLabCommand,
-            groupListLabsCommand,
-            userListLabsCommand
-        )
-    }
 
     @Transactional
     fun handleCallback(callbackQuery: CallbackQuery) {
@@ -56,11 +36,21 @@ class CallbackManager(
                     callbackQuery.from.userName
                 )
 
+            val managedMessage = managedMessageService.findById(callbackQuery.message.chatId, callbackQuery.message.messageId)
+            if (managedMessage == null) {
+                val delete = DeleteMessage.builder()
+                    .chatId(callbackQuery.message.chatId)
+                    .messageId(callbackQuery.message.messageId)
+                    .build()
+                telegram.execute(delete)
+                return
+            }
+
             val context = CallbackContext(
                 query = callbackQuery,
                 membership = membership,
-                data = callbackDataSerializer.deserialize(callbackQuery.data),
-                managedMessage = managedMessageService.findById(callbackQuery.message.chatId, callbackQuery.message.messageId),
+                data = CallbackDataSerializer.deserialize(callbackQuery.data),
+                managedMessage = managedMessage,
                 user = user,
                 group = membership?.group,
                 telegram = telegram,

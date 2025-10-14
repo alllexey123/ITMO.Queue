@@ -4,6 +4,7 @@ import me.alllexey123.itmoqueue.model.ManagedMessage
 import me.alllexey123.itmoqueue.model.ManagedMessageId
 import me.alllexey123.itmoqueue.model.enums.MessageType
 import me.alllexey123.itmoqueue.repositories.ManagedMessageRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.objects.message.Message
 
@@ -25,7 +26,13 @@ class ManagedMessageService(
         return repository.save(managedMessage)
     }
 
-    fun findById(chatId: Long, messageId: Int): ManagedMessage? {
+    fun findById(managedMessageId: ManagedMessageId?): ManagedMessage? {
+        if (managedMessageId == null) return null
+        return repository.findByIdOrNull(managedMessageId)
+    }
+
+    fun findById(chatId: Long?, messageId: Int?): ManagedMessage? {
+        if (chatId == null || messageId == null) return null
         return repository.findById(ManagedMessageId(chatId, messageId)).orElse(null)
     }
 

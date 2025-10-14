@@ -46,6 +46,10 @@ class SubjectService(private val subjectRepository: SubjectRepository,
         return subjectRepository.findByIdOrNull(id)
     }
 
+    fun findByShortId(id: String): Subject? {
+        return subjectRepository.findByShortId(id)
+    }
+
     fun deleteById(id: Long) {
         subjectRepository.deleteById(id)
         flush()

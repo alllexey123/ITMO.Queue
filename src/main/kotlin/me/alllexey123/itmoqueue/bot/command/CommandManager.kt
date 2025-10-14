@@ -1,6 +1,5 @@
 package me.alllexey123.itmoqueue.bot.command
 
-import jakarta.annotation.PostConstruct
 import jakarta.transaction.Transactional
 import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
@@ -14,39 +13,16 @@ import org.telegram.telegrambots.meta.generics.TelegramClient
 
 @Component
 class CommandManager(
-    private val groupNewLabCommand: GroupNewLabCommand,
-    private val groupListLabsCommand: GroupListLabsCommand,
-    private val startCommand: StartCommand,
-    private val groupNewSubjectCommand: GroupNewSubjectCommand,
-    private val cancelCommand: CancelCommand,
     private val telegram: Telegram,
-    private val groupListSubjectsCommand: GroupListSubjectsCommand,
     private val contextService: ContextService,
-    private val userSetNicknameCommand: UserSetNicknameCommand,
-    private val userListLabsCommand: UserListLabsCommand
+    private val handlers: List<CommandHandler>
 ) {
-
-    lateinit var handlers: List<CommandHandler>
-
-    @PostConstruct
-    fun init() {
-        handlers = listOf(
-            startCommand,
-            cancelCommand,
-            groupNewSubjectCommand,
-            groupListSubjectsCommand,
-            groupNewLabCommand,
-            groupListLabsCommand,
-            userSetNicknameCommand,
-            userListLabsCommand
-        )
-    }
 
     @Transactional
     fun handleCommand(message: Message) {
         val text = message.text
-        val command = text.split("@", limit = 2)[0].split(" ", limit = 2)[0].substring(1)
-        val commandNameMatches = handlers.filter { it.command().equals(command, ignoreCase = true) }
+        val command = text.split("@", limit = 2)[0].split(" ", limit = 2)[0]
+        val commandNameMatches = handlers.filter { it.command().raw.equals(command, ignoreCase = true) }
         val currentScope = if (message.isUserMessage) Scope.USER else Scope.GROUP
         val fullMatches = commandNameMatches.filter { it.scope() == Scope.ANY || it.scope() == currentScope }
         if (fullMatches.isEmpty() && commandNameMatches.isNotEmpty()) {

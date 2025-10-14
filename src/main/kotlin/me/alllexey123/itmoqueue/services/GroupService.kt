@@ -1,15 +1,34 @@
 package me.alllexey123.itmoqueue.services
 
+import jakarta.annotation.PostConstruct
 import me.alllexey123.itmoqueue.model.Group
+import me.alllexey123.itmoqueue.model.GroupSettings
 import me.alllexey123.itmoqueue.repositories.GroupRepository
+import me.alllexey123.itmoqueue.repositories.GroupSettingsRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat
 
 @Service
-class GroupService(private val groupRepository: GroupRepository, private val telegram: Telegram) {
+class GroupService(
+    private val groupRepository: GroupRepository,
+    private val telegram: Telegram,
+    private val groupSettingsRepository: GroupSettingsRepository
+) {
 
-    fun findById(groupId: Long): Group? {
+    @PostConstruct
+    fun init() {
+        groupRepository.findAll().forEach { g -> {
+            if (g.settings == null) {
+                val groupSettings = GroupSettings(group = g)
+                g.settings = groupSettings
+                groupSettingsRepository.save(groupSettings)
+            }
+        } }
+    }
+
+    fun findById(groupId: Long?): Group? {
+        if (groupId == null) return null
         return groupRepository.findByIdOrNull(groupId)
     }
 
@@ -26,21 +45,23 @@ class GroupService(private val groupRepository: GroupRepository, private val tel
     }
 
     fun getOrCreateByChatIdAndName(chatId: Long, name: String?): Group {
-        val group = findByChatId(chatId)
-        if (group == null) {
-            return save(
-                Group(
-                    name = name,
-                    chatId = chatId
-                )
+        val group = findByChatId(chatId) ?: save(
+            Group(
+                name = name,
+                chatId = chatId
             )
-        } else {
-            if (group.name == null) {
-                group.name = name
-                return save(group)
-            }
+        )
+        var needsSave = false
+        if (group.name == null) {
+            group.name = name
+            needsSave = true
         }
-        return group
+        if (group.settings == null) {
+            val settings = GroupSettings(group = group)
+            groupSettingsRepository.save(settings)
+            needsSave = true
+        }
+        return if (needsSave) save(group) else group
     }
 
     fun refreshGroupNames() {
@@ -50,7 +71,7 @@ class GroupService(private val groupRepository: GroupRepository, private val tel
                 val res = telegram.execute(getGroupInfo)
                 group.name = res.title
                 save(group)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
             }
         }
     }

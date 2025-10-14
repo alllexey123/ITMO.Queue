@@ -1,5 +1,6 @@
 package me.alllexey123.itmoqueue.bot.extensions
 
+import org.telegram.telegrambots.meta.api.methods.ParseMode
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.message.MaybeInaccessibleMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
@@ -21,3 +22,6 @@ fun EditMessageText.EditMessageTextBuilder<*, *>.withTextAndInlineKeyboard(
 ): EditMessageText {
     return this.text(text).replyMarkup(keyboard).build()
 }
+
+fun EditMessageText.EditMessageTextBuilder<*, *>.markdown(): EditMessageText.EditMessageTextBuilder<*, *> =
+    this.parseMode(ParseMode.MARKDOWN)

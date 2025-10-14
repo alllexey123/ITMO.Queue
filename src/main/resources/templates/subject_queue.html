@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Очередь | ' + ${subject.name}">Детали очереди</title>
+    <link rel="stylesheet" href="../static/style.css" th:href="@{/style.css}">
+</head>
+<body>
+
+<div class="container">
+    <h1 th:text="'Предмет: ' + ${subject.name}">Название предмета</h1>
+</div>
+
+<div class="container">
+
+    <div th:if="${entries.isEmpty()}">
+        <p class="empty-queue">Очередь пока пуста.</p>
+    </div>
+
+
+    <div class="table-wrapper" th:if="${!entries.isEmpty()}">
+        <table>
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Никнейм</th>
+                <th>Попытка</th>
+                <th>Статус</th>
+                <th>Лаба</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="entry, iterStat : ${entries}">
+                <td th:text="${iterStat.count}">1</td>
+                <td th:text="${entry.user.nickname ?: 'Без ника'}">nickname</td>
+                <td th:text="${entry.attemptNumber}">1</td>
+                <td>
+                    <span th:text="${entry.done ? 'Сдано' : 'В очереди'}"
+                          th:class="${entry.done ? 'status-done' : 'status-in-queue'}">
+                        Статус
+                    </span>
+                </td>
+                <td th:text="${entry.lab.name ?: 'Лаба'}">Лаба</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

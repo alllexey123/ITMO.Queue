@@ -27,12 +27,12 @@ class StartCommand(private val telegram: Telegram) : CommandHandler {
 
     fun buildKeyboard(): ReplyKeyboardMarkup {
         return ReplyKeyboardMarkup.builder()
-            .keyboardRow(KeyboardRow("/list_labs", "/set_name"))
+            .keyboardRow(KeyboardRow("/labs", "/name"))
             .resizeKeyboard(true)
             .build()
     }
 
-    override fun command() = "start"
+    override fun command() = Command.START
 
     override fun scope() = Scope.ANY
 }

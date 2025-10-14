@@ -1,133 +1,217 @@
 package me.alllexey123.itmoqueue.bot.callback
 
+import me.alllexey123.itmoqueue.bot.view.GroupSettingsView
 import me.alllexey123.itmoqueue.model.enums.MergedQueueType
 import me.alllexey123.itmoqueue.model.enums.QueueType
-import org.springframework.stereotype.Component
 
-sealed class CallbackData(val commandPrefix: String, val actionPrefix: String) {
+sealed class CallbackData(val handlerPrefix: String, val actionPrefix: String) {
+    open fun toPayload(): List<String> = emptyList()
 
-    // list_labs
-    data class SelectLab(val labId: Long) : CallbackData("list_labs", "select")
-    data class ShowLabsPage(val page: Int) : CallbackData("list_labs", "page")
-    class DeleteLab : CallbackData("list_labs", "delete")
-    class DeleteLabConfirm : CallbackData("list_labs", "delete_confirm")
-    class DeleteLabCancel : CallbackData("list_labs", "delete_cancel")
-    class AddToQueue : CallbackData("list_labs", "add_to_queue")
-    class AddToQueueCancel : CallbackData("list_labs", "add_to_queue_cancel")
-    class RemoveFromQueue : CallbackData("list_labs", "remove_from_queue")
-    class MarkQueueEntryDone : CallbackData("list_labs", "mark_queue_entry_done")
-    class ShowLabsList : CallbackData("list_labs", "show_labs_list")
-    class PinLab : CallbackData("list_labs", "pin_lab")
-    class EditLab : CallbackData("list_labs", "edit_lab")
-    data class SelectAttemptNumber(val attempt: Int) : CallbackData("list_labs", "select_attempt_number")
-    class LabQueueTypeAsk : CallbackData("list_labs", "queue_type_ask")
-    data class LabQueueTypeSelect(val type: QueueType) : CallbackData("list_labs", "queue_type_select")
+    companion object {
+        private val deserializerRegistry = mutableMapOf<String, (List<String>) -> CallbackData>()
 
-    // list_subjects
-    data class SelectSubject(val subjectId: Long) : CallbackData("list_subjects", "select")
-    data class ShowSubjectsPage(val page: Int) : CallbackData("list_subjects", "page")
-    class DeleteSubject : CallbackData("list_subjects", "delete")
-    class DeleteSubjectConfirm : CallbackData("list_subjects", "delete_confirm")
-    class DeleteSubjectCancel : CallbackData("list_subjects", "delete_cancel")
-    class EditSubject : CallbackData("list_subjects", "edit")
-    class ShowSubjectsList : CallbackData("list_subjects", "show_subjects_list")
-    class ShowSubjectLabsList : CallbackData("list_subjects", "show_subject_labs_list")
-    class MergedQueueTypeAsk : CallbackData("list_subjects", "merged_queue_type_ask")
-    data class MergedQueueTypeSelect(val type: MergedQueueType?) : CallbackData("list_subjects", "merged_queue_type_select")
+        private fun register(command: String, action: String, creator: (List<String>) -> CallbackData) {
+            val key = "$command:$action"
+            if (deserializerRegistry.containsKey(key)) {
+                throw IllegalStateException("Duplicate callback data registration for key: $key")
+            }
+            deserializerRegistry[key] = creator
+        }
 
-    // new_lab
-    data class NewLabPickSubject(val subjectId: Long) : CallbackData("new_lab", "pick_subject")
-    data class NewLabSubjectsPage(val page: Int) : CallbackData("new_lab", "subjects_page")
+        fun findCreator(key: String): ((List<String>) -> CallbackData)? {
+            return deserializerRegistry[key]
+        }
+
+        init {
+            // Group List Callbacks
+            register("group_list", "menu") { GroupListMenu() }
+            register("group_list", "select") { p -> GroupListSelect(p[0].toLong()) }
+            register("group_list", "back") { GroupListBack() }
+
+            // Lab callbacks
+            register("lab", "details") { p -> LabDetailsShow(p[0].toLong()) }
+            register("lab", "refresh") { LabDetailsRefresh() }
+            register("lab", "remove_from_queue") { LabRemoveFromQueue() }
+            register("lab", "mark_queue_entry_done") { LabMarkEntryDone() }
+            register("lab", "pin") { LabPin() }
+
+            // Lab Edit callbacks
+            register("lab_edit", "menu") { LabEditMenu() }
+            register("lab_edit", "change_name") { LabEditChangeName() }
+
+            // Lab Delete callbacks
+            register("lab_delete", "ask") { LabDeleteAsk() }
+            register("lab_delete", "confirm") { LabDeleteConfirm() }
+            register("lab_delete", "cancel") { LabDeleteCancel() }
+
+            // Lab Queue Type callbacks
+            register("lab_queue_type", "queue_type_ask") { p -> LabQueueTypeAsk(p[0].toBoolean()) }
+            register("lab_queue_type", "queue_type_select") { p -> LabQueueTypeSelect(p[0].toBoolean(), QueueType.valueOf(p[1])) }
+
+            // Lab Add To Queue callbacks
+            register("lab_add_to_queue", "ask") { LabAddToQueueAsk() }
+            register("lab_add_to_queue", "select_attempt") { p -> LabAddToQueueAttempt(p[0].toInt()) }
+            register("lab_add_to_queue", "cancel") { LabAddToQueueCancel() }
+
+            // Lab List callbacks
+            register("lab_list", "page") { p -> ShowLabList(p.getOrNull(0)?.toInt() ?: 0) }
+
+            // Subject callbacks
+            register("subject", "details") { p -> SubjectDetailsShow(p[0].toLong()) }
+            register("subject", "refresh") { SubjectDetailsRefresh() }
+            register("subject", "change_name") { SubjectChangeName() }
+            register("subject", "labs") { SubjectShowLabList() }
+
+            // Subject Edit callbacks
+            register("subject_edit", "menu") { SubjectEditMenu() }
+            register("subject_edit", "change_name") { SubjectEditChangeName() }
+
+            // Subject Delete callbacks
+            register("subject_delete", "ask") { SubjectDeleteAsk() }
+            register("subject_delete", "confirm") { SubjectDeleteConfirm() }
+            register("subject_delete", "cancel") { SubjectDeleteCancel() }
+
+            // Subject Queue Type callbacks
+            register("subject_queue_type", "ask") { p -> SubjectQueueTypeAsk(p[0].toBoolean()) }
+            register("subject_queue_type", "select") { p ->
+                SubjectQueueTypeSelect(p[0].toBoolean(), MergedQueueType.valueOf(p[1]))
+            }
+
+            // Subject List callbacks
+            register("subject_list", "page") { p -> ShowSubjectList(p.getOrNull(0)?.toInt() ?: 0) }
+
+            // New callbacks
+            register("new", "menu") { NewMenu() }
+
+            // New subject callbacks
+            register("new_subject", "menu") { NewSubjectMenu() }
+
+            // New Lab callbacks
+            register("new_lab", "select_subject") { p -> NewLabSelectSubject(p[0].toLong()) }
+            register("new_lab", "select_subject_page") { p -> NewLabSelectSubjectPage(p[0].toInt()) }
+            register("new_lab", "send_to_group") {p -> NewLabSendToGroup(p[0].toLong()) }
+            register("new_lab", "cancel") { NewLabCancel() }
+
+            // Settings callbacks
+            register("settings", "menu") { SettingsMenu() }
+            register("settings", "select_thread") { SettingsSelectThread() }
+            register("settings", "reset_thread") { SettingsResetThread() }
+            register("settings", "switch_setting") { p ->
+                SettingsSwitchSetting(
+                    GroupSettingsView.SwitchSetting.valueOf(
+                        p[0]
+                    ), p[1].toBoolean()
+                )
+            }
+        }
+    }
+
+    // Group List callbacks
+    class GroupListMenu() : CallbackData("group_list", "menu")
+    data class GroupListSelect(val groupId: Long) : CallbackData("group_list", "select") {
+        override fun toPayload() = listOf(groupId.toString())
+    }
+    class GroupListBack : CallbackData("group_list", "back")
+
+    // Lab callbacks
+    data class LabDetailsShow(val labId: Long) : CallbackData("lab", "details") {
+        override fun toPayload() = listOf(labId.toString())
+    }
+
+    class LabDetailsRefresh() : CallbackData("lab", "refresh")
+    class LabRemoveFromQueue : CallbackData("lab", "remove_from_queue")
+    class LabMarkEntryDone : CallbackData("lab", "mark_queue_entry_done")
+    class LabPin : CallbackData("lab", "pin")
+
+    // Lab Edit callbacks
+    class LabEditMenu : CallbackData("lab_edit", "menu")
+    class LabEditChangeName : CallbackData("lab_edit", "change_name")
+
+    // Lab Delete callbacks
+    class LabDeleteAsk : CallbackData("lab_delete", "ask")
+    class LabDeleteConfirm : CallbackData("lab_delete", "confirm")
+    class LabDeleteCancel : CallbackData("lab_delete", "cancel")
+
+    // Lab Queue Type callbacks
+    data class LabQueueTypeAsk(val selectingDefault: Boolean) : CallbackData("lab_queue_type", "queue_type_ask") {
+        override fun toPayload(): List<String> = listOf(selectingDefault.toString())
+    }
+    data class LabQueueTypeSelect(val selectingDefault: Boolean, val type: QueueType) : CallbackData("lab_queue_type", "queue_type_select") {
+        override fun toPayload() = listOf(selectingDefault.toString(), type.name)
+    }
+
+    // Lab Add To Queue callbacks
+    class LabAddToQueueAsk : CallbackData("lab_add_to_queue", "ask")
+    data class LabAddToQueueAttempt(val attempt: Int) : CallbackData("lab_add_to_queue", "select_attempt") {
+        override fun toPayload() = listOf(attempt.toString())
+    }
+
+    class LabAddToQueueCancel : CallbackData("lab_add_to_queue", "cancel")
+
+    // Lab List callbacks
+    data class ShowLabList(val page: Int = 0) : CallbackData("lab_list", "page") {
+        override fun toPayload() = listOf(page.toString())
+    }
+
+    // Subject callbacks
+    data class SubjectDetailsShow(val subjectId: Long) : CallbackData("subject", "details") {
+        override fun toPayload() = listOf(subjectId.toString())
+    }
+
+    class SubjectDetailsRefresh() : CallbackData("subject", "refresh")
+    class SubjectChangeName : CallbackData("subject", "change_name")
+    class SubjectShowLabList : CallbackData("subject", "labs")
+
+    // Subject Edit callbacks
+    class SubjectEditMenu : CallbackData("subject_edit", "menu")
+    class SubjectEditChangeName : CallbackData("subject_edit", "change_name")
+
+    // Subject Delete callbacks
+    class SubjectDeleteAsk : CallbackData("subject_delete", "ask")
+    class SubjectDeleteConfirm : CallbackData("subject_delete", "confirm")
+    class SubjectDeleteCancel : CallbackData("subject_delete", "cancel")
+
+    // Subject Queue Type callbacks
+    data class SubjectQueueTypeAsk(val selectingDefault: Boolean) : CallbackData("subject_queue_type", "ask") {
+        override fun toPayload(): List<String> = listOf(selectingDefault.toString())
+    }
+    data class SubjectQueueTypeSelect(val selectingDefault: Boolean, val type: MergedQueueType) : CallbackData("subject_queue_type", "select") {
+        override fun toPayload() = listOf(selectingDefault.toString(), type.name)
+    }
+
+    // Subject List callbacks
+    data class ShowSubjectList(val page: Int = 0) : CallbackData("subject_list", "page") {
+        override fun toPayload() = listOf(page.toString())
+    }
+
+    // New callbacks
+    class NewMenu : CallbackData("new", "menu")
+
+    // New Subject callbacks
+    class NewSubjectMenu : CallbackData("new_subject", "menu")
+
+    // New Lab callbacks
+    data class NewLabSelectSubject(val subjectId: Long) : CallbackData("new_lab", "select_subject") {
+        override fun toPayload() = listOf(subjectId.toString())
+    }
+
+    data class NewLabSelectSubjectPage(val page: Int = 0) : CallbackData("new_lab", "select_subject_page") {
+        override fun toPayload() = listOf(page.toString())
+    }
+
+    data class NewLabSendToGroup(val labId: Long) : CallbackData("new_lab", "send_to_group") {
+        override fun toPayload() = listOf(labId.toString())
+    }
+
     class NewLabCancel : CallbackData("new_lab", "cancel")
 
-}
-
-@Component
-class CallbackDataSerializer : ICallbackDataSerializer {
-
-    override fun serialize(data: CallbackData): String {
-        val prefix = data.commandPrefix + ":" + data.actionPrefix
-        val additionalData = when (data) {
-            is CallbackData.SelectLab -> "${data.labId}"
-            is CallbackData.ShowLabsPage -> "${data.page}"
-            is CallbackData.DeleteLab -> ""
-            is CallbackData.DeleteLabConfirm -> ""
-            is CallbackData.DeleteLabCancel -> ""
-            is CallbackData.AddToQueue -> ""
-            is CallbackData.AddToQueueCancel -> ""
-            is CallbackData.RemoveFromQueue -> ""
-            is CallbackData.MarkQueueEntryDone -> ""
-            is CallbackData.ShowLabsList -> ""
-            is CallbackData.PinLab -> ""
-            is CallbackData.EditLab -> ""
-            is CallbackData.SelectAttemptNumber -> "${data.attempt}"
-            is CallbackData.LabQueueTypeAsk -> ""
-            is CallbackData.LabQueueTypeSelect -> data.type.name
-
-            is CallbackData.SelectSubject -> "${data.subjectId}"
-            is CallbackData.ShowSubjectsPage -> "${data.page}"
-            is CallbackData.DeleteSubject -> ""
-            is CallbackData.DeleteSubjectConfirm -> ""
-            is CallbackData.DeleteSubjectCancel -> ""
-            is CallbackData.EditSubject -> ""
-            is CallbackData.ShowSubjectsList -> ""
-            is CallbackData.ShowSubjectLabsList -> ""
-            is CallbackData.MergedQueueTypeAsk -> ""
-            is CallbackData.MergedQueueTypeSelect -> data.type?.name ?: ""
-
-            is CallbackData.NewLabPickSubject -> "${data.subjectId}"
-            is CallbackData.NewLabSubjectsPage -> "${data.page}"
-            is CallbackData.NewLabCancel -> ""
-        }
-        return if (additionalData.isEmpty()) prefix else "${prefix}:${additionalData}"
-    }
-
-    override fun deserialize(rawData: String): CallbackData {
-        var parts = rawData.split(":")
-        val command = parts.getOrNull(0)
-        val action = parts.getOrNull(1)
-
-        parts = parts.drop(2)
-        return when ("$command:$action") {
-            "list_labs:select" -> CallbackData.SelectLab(parts[0].toLong())
-            "list_labs:page" -> CallbackData.ShowLabsPage(parts[0].toInt())
-            "list_labs:delete" -> CallbackData.DeleteLab()
-            "list_labs:delete_confirm" -> CallbackData.DeleteLabConfirm()
-            "list_labs:delete_cancel" -> CallbackData.DeleteLabCancel()
-            "list_labs:add_to_queue" -> CallbackData.AddToQueue()
-            "list_labs:add_to_queue_cancel" -> CallbackData.AddToQueueCancel()
-            "list_labs:remove_from_queue" -> CallbackData.RemoveFromQueue()
-            "list_labs:mark_queue_entry_done" -> CallbackData.MarkQueueEntryDone()
-            "list_labs:show_labs_list" -> CallbackData.ShowLabsList()
-            "list_labs:pin_lab" -> CallbackData.PinLab()
-            "list_labs:edit_lab" -> CallbackData.EditLab()
-            "list_labs:select_attempt_number" -> CallbackData.SelectAttemptNumber(parts[0].toInt())
-            "list_labs:queue_type_ask" -> CallbackData.LabQueueTypeAsk()
-            "list_labs:queue_type_select" -> CallbackData.LabQueueTypeSelect(QueueType.valueOf(parts[0]))
-
-            "list_subjects:select" -> CallbackData.SelectSubject(parts[0].toLong())
-            "list_subjects:page" -> CallbackData.ShowSubjectsPage(parts[0].toInt())
-            "list_subjects:delete" -> CallbackData.DeleteSubject()
-            "list_subjects:delete_confirm" -> CallbackData.DeleteSubjectConfirm()
-            "list_subjects:delete_cancel" -> CallbackData.DeleteSubjectCancel()
-            "list_subjects:edit" -> CallbackData.EditSubject()
-            "list_subjects:show_subjects_list" -> CallbackData.ShowSubjectsList()
-            "list_subjects:show_subject_labs_list" -> CallbackData.ShowSubjectLabsList()
-            "list_subjects:merged_queue_type_ask" -> CallbackData.MergedQueueTypeAsk()
-            "list_subjects:merged_queue_type_select" -> CallbackData.MergedQueueTypeSelect(parts.getOrNull(0)?.let { MergedQueueType.valueOf(it) })
-
-            "new_lab:pick_subject" -> CallbackData.NewLabPickSubject(parts[0].toLong())
-            "new_lab:subjects_page" -> CallbackData.NewLabSubjectsPage(parts[0].toInt())
-            "new_lab:cancel" -> CallbackData.NewLabCancel()
-
-            else -> throw IllegalArgumentException("Unknown callback data")
-        }
+    // Settings callbacks
+    class SettingsMenu() : CallbackData("settings", "menu")
+    class SettingsSelectThread() : CallbackData("settings", "select_thread")
+    class SettingsResetThread() : CallbackData("settings", "reset_thread")
+    data class SettingsSwitchSetting(val setting: GroupSettingsView.SwitchSetting, val newVal: Boolean) :
+        CallbackData("settings", "switch_setting") {
+        override fun toPayload() = listOf(setting.name, newVal.toString())
     }
 }
 
-interface ICallbackDataSerializer {
-
-    fun serialize(data: CallbackData): String
-
-    fun deserialize(rawData: String): CallbackData
-}
