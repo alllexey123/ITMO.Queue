@@ -1,17 +1,34 @@
 package me.alllexey123.itmoqueue.services
 
+import jakarta.annotation.PostConstruct
 import me.alllexey123.itmoqueue.model.ManagedMessage
 import me.alllexey123.itmoqueue.model.ManagedMessageId
 import me.alllexey123.itmoqueue.model.enums.MessageType
 import me.alllexey123.itmoqueue.repositories.ManagedMessageRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
 
 @Service
 class ManagedMessageService(
-    private val repository: ManagedMessageRepository
+    private val repository: ManagedMessageRepository,
+    private val telegram: Telegram
 ) {
+
+    @PostConstruct
+    @Transactional
+    fun init() {
+        repository.findAll().forEach {
+            val delete = DeleteMessage.builder()
+                .chatId(it.id.chatId)
+                .messageId(it.id.messageId)
+                .build()
+            telegram.execute(delete)
+            repository.delete(it)
+        }
+    }
 
     fun register(
         sentMessage: Message,
