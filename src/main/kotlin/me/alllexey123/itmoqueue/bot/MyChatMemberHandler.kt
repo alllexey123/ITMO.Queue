@@ -1,6 +1,7 @@
 package me.alllexey123.itmoqueue.bot
 
 import jakarta.transaction.Transactional
+import me.alllexey123.itmoqueue.bot.command.Command
 import me.alllexey123.itmoqueue.model.Membership
 import me.alllexey123.itmoqueue.services.ContextService
 import me.alllexey123.itmoqueue.services.MembershipService
@@ -20,16 +21,9 @@ class MyChatMemberHandler(
 
     @Transactional
     fun handle(update: ChatMemberUpdated) {
-        if (update.newChatMember.status == "left") {
-            onLeft(update)
-        }
         if (update.newChatMember.status == "member") {
             onJoin(update)
         }
-    }
-
-    fun onLeft(update: ChatMemberUpdated) {
-
     }
 
     fun onJoin(update: ChatMemberUpdated) {
@@ -41,10 +35,6 @@ class MyChatMemberHandler(
         val membership = contextService.getMembership(chatId, update.chat.title, from.id, from.userName)
         membershipService.resetMembershipTypes(membership.group)
         membership.type = Membership.Type.ADMIN
-//        val admins = telegram.execute(GetChatAdministrators.builder().chatId(chatId).build())
-//        admins.forEach { admin ->
-//            contextService.getMembership(chatId, admin.user.id, admin.user.userName).type = Membership.Type.ADMIN
-//        }
         val sendMessage = SendMessage.builder()
             .chatId(chatId)
             .parseMode(ParseMode.MARKDOWN)
@@ -57,8 +47,8 @@ class MyChatMemberHandler(
                  • Я не вижу все сообщения (в целях вашей же анонимности), поэтому при настройке иногда надо отвечать на моё сообщение напрямую (например, при выборе названия лабы).
                  • Исходный код бота полностью открыт и находится [тут](https://github.com/alllexey123/ITMO.Queue)
                  
-                Обязательно изучите инструкцию [тут](https://telegra.ph/Instrukciya-dlya-bota-ITMOQueue-10-04)
-                Для начала напишите /new\_subject и /new\_lab 
+                Основная информация о боте [тут](https://github.com/alllexey123/ITMO.Queue)
+                Для начала напишите ${Command.GROUP.escaped} или ${Command.SUBJECTS.escaped}
             """.trimIndent())
             .disableWebPagePreview(true)
             .build()

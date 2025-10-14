@@ -17,7 +17,7 @@ class StartCommand(private val telegram: Telegram) : CommandHandler {
             .text("""
                 Привет 🙋
                 Я - бот для создания очередей на сдачу лабораторных работ в ИТМО.
-                Рекомендую прочитать инструкцию [тут](https://telegra.ph/Instrukciya-dlya-bota-ITMOQueue-10-04)
+                Рекомендую прочитать общую информацию о боте [тут](https://github.com/alllexey123/ITMO.Queue)
             """.trimIndent())
             .replyMarkup(buildKeyboard())
             .parseMode(ParseMode.MARKDOWN)
@@ -27,8 +27,9 @@ class StartCommand(private val telegram: Telegram) : CommandHandler {
 
     fun buildKeyboard(): ReplyKeyboardMarkup {
         return ReplyKeyboardMarkup.builder()
-            .keyboardRow(KeyboardRow("/labs", "/name"))
+            .keyboardRow(KeyboardRow(Command.GROUP.raw, Command.LABS.raw, Command.NAME.raw))
             .resizeKeyboard(true)
+            .isPersistent(true)
             .build()
     }
 
