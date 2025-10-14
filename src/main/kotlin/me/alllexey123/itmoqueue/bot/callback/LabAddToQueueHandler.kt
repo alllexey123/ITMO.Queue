@@ -49,12 +49,12 @@ class LabAddToQueueHandler(
             context.answer("Вы уже присутствуете в очереди")
         } else {
             val group = getGroupOrDelete(context) ?: return
-            if (!group.settings!!.attemptsEnabled) {
+            if (!group.settings.attemptsEnabled) {
                 queueService.addToQueue(context.user, lab, 1)
                 context.answer("Вы добавлены в очередь")
                 labHandler.updateLabDetails(lab, context.managedMessage)
             } else {
-                val directly = group.settings!!.askAttemptsDirectly
+                val directly = group.settings.askAttemptsDirectly
                 val text = labAddToQueueView.getLabAttemptText(context.user, context.isPrivate || directly)
                 val keyboard = labAddToQueueView.getLabAttemptKeyboard()
                 val sendAttemptMessage = if (directly) {
@@ -63,7 +63,7 @@ class LabAddToQueueHandler(
                         .markdown()
                         .withTextAndInlineKeyboard(text, keyboard)
                 } else {
-                    context.send(group.settings!!.mainThreadId)
+                    context.send(group.settings.mainThreadId)
                         .markdown()
                         .withTextAndInlineKeyboard(text, keyboard)
                 }

@@ -51,7 +51,7 @@ class LabQueueTypeHandler(
         if (!requireMetadataAdmin(context)) return
         val group = getGroupOrDelete(context) ?: return
         if (selectingDefault) {
-            group.settings!!.defaultQueueType = type
+            group.settings.defaultQueueType = type
             groupSettingsHandler.updateGroupSettings(group, context.managedMessage, context.isPrivate)
         } else {
             val lab = getLabOrDelete(context) ?: return

@@ -48,7 +48,7 @@ class LabListHandler(
         val text = labListView.getLabsListGroupText(labs, page)
         val keyboard = labListView.getLabsListGroupKeyboard(labs, page)
         val send = SendMessage.builder()
-            .toThread(group.settings!!.mainThreadId ?: threadId)
+            .toThread(group.settings.mainThreadId ?: threadId)
             .markdown()
             .chatId(group.chatId)
             .text(text)

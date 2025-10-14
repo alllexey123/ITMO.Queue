@@ -51,7 +51,7 @@ class SubjectQueueTypeHandler(
         if (!requireMetadataAdmin(context)) return
         val group = getGroupOrDelete(context) ?: return
         if (selectingDefault) {
-            group.settings!!.defaultMergedQueueType = type
+            group.settings.defaultMergedQueueType = type
             groupSettingsHandler.updateGroupSettings(group, context.managedMessage, context.isPrivate)
         } else {
             val subject = getSubjectOrDelete(context) ?: return

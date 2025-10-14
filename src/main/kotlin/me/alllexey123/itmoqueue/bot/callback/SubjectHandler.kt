@@ -50,12 +50,12 @@ class SubjectHandler(
     }
 
     fun sendSubjectDetails(group: Group, subject: Subject, threadId: Int? = null) {
-        val activeEntries = queueService.sortedEntries(subject, !group.settings!!.attemptsEnabled).filter { !it.done }
-        val text = subjectView.getSubjectText(subject, activeEntries)
+        val activeEntries = queueService.sortedEntries(subject, !group.settings.attemptsEnabled).filter { !it.done }
+        val text = subjectView.getSubjectText(subject, activeEntries, !group.settings.attemptsEnabled)
         val keyboard = subjectView.getSubjectKeyboard()
 
         val send = SendMessage.builder()
-            .toThread(group.settings!!.mainThreadId ?: threadId)
+            .toThread(group.settings.mainThreadId ?: threadId)
             .chatId(group.chatId)
             .markdown()
             .text(text)
@@ -70,8 +70,8 @@ class SubjectHandler(
 
     fun updateSubjectDetails(subject: Subject, managedMessage: ManagedMessage) {
         val group = subject.group
-        val activeEntries = queueService.sortedEntries(subject, !group.settings!!.attemptsEnabled).filter { !it.done }
-        val text = subjectView.getSubjectText(subject, activeEntries)
+        val activeEntries = queueService.sortedEntries(subject, !group.settings.attemptsEnabled).filter { !it.done }
+        val text = subjectView.getSubjectText(subject, activeEntries, !group.settings.attemptsEnabled)
         val keyboard = subjectView.getSubjectKeyboard()
 
         val editMessage = managedMessage.edit()

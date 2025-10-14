@@ -38,7 +38,7 @@ class LabQueueTypeView {
         val types = QueueType.entries.toTypedArray()
 
         val text = buildString {
-            appendLine("Тип очереди: *${group.settings!!.defaultQueueType.ruTitle}*")
+            appendLine("Тип очереди: *${group.settings.defaultQueueType.ruTitle}*")
             appendLine(Emoji.DIVIDER)
             appendLine("Выберите тип очереди лабы по умолчанию: ")
             types.forEachIndexed { i, type ->

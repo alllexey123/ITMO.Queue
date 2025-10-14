@@ -51,7 +51,7 @@ class SubjectDeleteHandler(
         val subject = getSubjectOrDelete(context) ?: return
         val text = subjectDeleteView.getSubjectDeleteText()
         val keyboard = subjectDeleteView.getSubjectDeleteKeyboard()
-        val send = context.send(subject.group.settings!!.mainThreadId)
+        val send = context.send(subject.group.settings.mainThreadId)
             .markdown()
             .withTextAndInlineKeyboard(text, keyboard)
 

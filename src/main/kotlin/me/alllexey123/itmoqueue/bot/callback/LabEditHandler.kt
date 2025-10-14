@@ -35,8 +35,8 @@ class LabEditHandler(
         if (!requireMetadataAdmin(context)) return
         val lab = getLabOrDelete(context) ?: return
         val group = lab.group
-        val text = labEditView.getLabEditText(lab, !group.settings!!.attemptsEnabled)
-        val keyboard = labEditView.getLabEditKeyboard(!group.settings!!.attemptsEnabled)
+        val text = labEditView.getLabEditText(lab, !group.settings.attemptsEnabled)
+        val keyboard = labEditView.getLabEditKeyboard(!group.settings.attemptsEnabled)
         val edit = context.edit().markdown()
             .withTextAndInlineKeyboard(text, keyboard)
         telegram.execute(edit)

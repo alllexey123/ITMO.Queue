@@ -41,7 +41,7 @@ class GroupSettingsHandler(
     private fun handleResetThread(context: CallbackContext) {
         if (!requireMetadataAdmin(context)) return
         val group = getGroupOrDelete(context) ?: return
-        group.settings!!.mainThreadId = null
+        group.settings.mainThreadId = null
         updateGroupSettings(group, context.managedMessage, context.isPrivate, context.isTopicMessage())
     }
 
@@ -50,7 +50,7 @@ class GroupSettingsHandler(
         if (!context.isTopicMessage()) return
         val group = getGroupOrDelete(context) ?: return
         val message = context.message as Message
-        group.settings!!.mainThreadId = message.messageThreadId
+        group.settings.mainThreadId = message.messageThreadId
         updateGroupSettings(group, context.managedMessage, context.isPrivate, context.isTopicMessage())
     }
 
@@ -62,8 +62,8 @@ class GroupSettingsHandler(
         if (!requireMetadataAdmin(context)) return
         val group = getGroupOrDelete(context) ?: return
         when (setting) {
-            GroupSettingsView.SwitchSetting.ATTEMPTS_ENABLED -> group.settings!!.attemptsEnabled = newVal
-            GroupSettingsView.SwitchSetting.ASK_ATTEMPTS_DIRECTLY -> group.settings!!.askAttemptsDirectly = newVal
+            GroupSettingsView.SwitchSetting.ATTEMPTS_ENABLED -> group.settings.attemptsEnabled = newVal
+            GroupSettingsView.SwitchSetting.ASK_ATTEMPTS_DIRECTLY -> group.settings.askAttemptsDirectly = newVal
         }
         updateGroupSettings(group, context.managedMessage, context.isTopicMessage())
     }

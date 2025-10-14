@@ -23,7 +23,7 @@ class Group(
 
     @OneToMany(cascade = [(CascadeType.ALL)], mappedBy = "group", orphanRemoval = true)
     val labs: MutableList<Lab> = mutableListOf(),
-
+) {
     @OneToOne(mappedBy = "group", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
-    var settings: GroupSettings? = null
-)
+    lateinit var settings: GroupSettings
+}

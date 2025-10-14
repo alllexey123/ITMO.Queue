@@ -57,7 +57,7 @@ class LabDeleteHandler(
         val lab = getLabOrDelete(context) ?: return
         val text = labDeleteView.getLabDeleteText()
         val keyboard = labDeleteView.getLabDeleteKeyboard()
-        val send = context.send(lab.group.settings!!.mainThreadId)
+        val send = context.send(lab.group.settings.mainThreadId)
             .markdown()
             .withTextAndInlineKeyboard(text, keyboard)
 

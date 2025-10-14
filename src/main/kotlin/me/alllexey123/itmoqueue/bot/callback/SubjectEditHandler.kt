@@ -35,8 +35,8 @@ class SubjectEditHandler(
         if (!requireMetadataAdmin(context)) return
         val subject = getSubjectOrDelete(context) ?: return
         val group = subject.group
-        val text = subjectEditView.getSubjectEditText(subject, !group.settings!!.attemptsEnabled)
-        val keyboard = subjectEditView.getSubjectEditKeyboard(!group.settings!!.attemptsEnabled)
+        val text = subjectEditView.getSubjectEditText(subject, !group.settings.attemptsEnabled)
+        val keyboard = subjectEditView.getSubjectEditKeyboard(!group.settings.attemptsEnabled)
         val edit = context.edit().markdown()
             .withTextAndInlineKeyboard(text, keyboard)
         telegram.execute(edit)

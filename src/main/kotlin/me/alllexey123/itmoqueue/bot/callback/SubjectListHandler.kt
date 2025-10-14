@@ -40,7 +40,7 @@ class SubjectListHandler(
         val text = subjectListView.getSubjectListText(subjects, page)
         val keyboard = subjectListView.getSubjectListKeyboard(subjects, page)
         val send = SendMessage.builder()
-            .toThread(group.settings!!.mainThreadId ?: threadId)
+            .toThread(group.settings.mainThreadId ?: threadId)
             .markdown()
             .chatId(group.chatId)
             .text(text)

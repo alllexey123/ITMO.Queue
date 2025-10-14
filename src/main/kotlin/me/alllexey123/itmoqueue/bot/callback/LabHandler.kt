@@ -85,7 +85,7 @@ class LabHandler(
     }
 
     fun sendLabDetails(group: Group, lab: Lab, pinned: Boolean = false, threadId: Int? = null) {
-        val activeEntries = queueService.sortedEntries(lab, !group.settings!!.attemptsEnabled).filter { !it.done }
+        val activeEntries = queueService.sortedEntries(lab, !group.settings.attemptsEnabled).filter { !it.done }
         val text = labView.getLabText(lab, activeEntries)
         val keyboard = labView.getLabKeyboard(
             hideSettings = pinned,
@@ -93,7 +93,7 @@ class LabHandler(
         )
 
         val send = SendMessage.builder()
-            .toThread(group.settings!!.mainThreadId ?: threadId)
+            .toThread(group.settings.mainThreadId ?: threadId)
             .chatId(group.chatId)
             .markdown()
             .text(text)
@@ -109,7 +109,7 @@ class LabHandler(
     fun updateLabDetails(lab: Lab, managedMessage: ManagedMessage, pinned: Boolean? = null) {
         val group = lab.group
         val realPinned = pinned ?: managedMessage.metadata.getBoolean(LAB_PINNED_KEY, false)
-        val activeEntries = queueService.sortedEntries(lab, !group.settings!!.attemptsEnabled).filter { !it.done }
+        val activeEntries = queueService.sortedEntries(lab, !group.settings.attemptsEnabled).filter { !it.done }
         val text = labView.getLabText(lab, activeEntries)
         val keyboard = labView.getLabKeyboard(
             hideSettings = realPinned,

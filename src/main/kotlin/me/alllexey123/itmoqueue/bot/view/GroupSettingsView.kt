@@ -13,7 +13,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 class GroupSettingsView {
 
     fun getGroupSettingsText(group: Group): String {
-        val settings = group.settings!!
+        val settings = group.settings
         return buildString {
             appendLine("Группа *${group.name}*")
             appendLine(Emoji.DIVIDER)
@@ -28,7 +28,7 @@ class GroupSettingsView {
     }
 
     fun getGroupSettingsKeyboard(group: Group, showThreadId: Boolean): InlineKeyboardMarkup {
-        val settings = group.settings!!
+        val settings = group.settings
         val rows: MutableList<InlineKeyboardRow> = mutableListOf()
         rows.add(row(switchSetting(SwitchSetting.ATTEMPTS_ENABLED, settings.attemptsEnabled)))
         if (settings.attemptsEnabled) {

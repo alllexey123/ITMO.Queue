@@ -1,10 +1,8 @@
 package me.alllexey123.itmoqueue.services
 
-import jakarta.annotation.PostConstruct
 import me.alllexey123.itmoqueue.model.Group
 import me.alllexey123.itmoqueue.model.GroupSettings
 import me.alllexey123.itmoqueue.repositories.GroupRepository
-import me.alllexey123.itmoqueue.repositories.GroupSettingsRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat
@@ -12,8 +10,7 @@ import org.telegram.telegrambots.meta.api.methods.groupadministration.GetChat
 @Service
 class GroupService(
     private val groupRepository: GroupRepository,
-    private val telegram: Telegram,
-    private val groupSettingsRepository: GroupSettingsRepository
+    private val telegram: Telegram
 ) {
 
     fun findById(groupId: Long?): Group? {
@@ -34,23 +31,26 @@ class GroupService(
     }
 
     fun getOrCreateByChatIdAndName(chatId: Long, name: String?): Group {
-        val group = findByChatId(chatId) ?: save(
-            Group(
-                name = name,
-                chatId = chatId
-            )
+        val existingGroup = findByChatId(chatId)
+        if (existingGroup != null) {
+            var needsSave = false
+            if (existingGroup.name != name) {
+                existingGroup.name = name
+                needsSave = true
+            }
+            return if (needsSave) save(existingGroup) else existingGroup
+        }
+
+        val newGroup = Group(
+            name = name,
+            chatId = chatId,
         )
-        var needsSave = false
-        if (group.name == null) {
-            group.name = name
-            needsSave = true
-        }
-        if (group.settings == null) {
-            val settings = GroupSettings(group = group)
-            groupSettingsRepository.save(settings)
-            needsSave = true
-        }
-        return if (needsSave) save(group) else group
+
+        val newSettings = GroupSettings(group = newGroup)
+
+        newGroup.settings = newSettings
+
+        return save(newGroup)
     }
 
     fun refreshGroupNames() {

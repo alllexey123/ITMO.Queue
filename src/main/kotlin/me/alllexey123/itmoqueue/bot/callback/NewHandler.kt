@@ -43,7 +43,7 @@ class NewHandler(
             .text(text)
             .replyMarkup(keyboard)
 
-        group.settings!!.mainThreadId?.let { send.messageThreadId(it) }
+        group.settings.mainThreadId?.let { send.messageThreadId(it) }
 
         managedMessageService.register(
             sentMessage = telegram.execute(send.build()),

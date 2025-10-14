@@ -37,7 +37,7 @@ class SubjectQueueTypeView {
         val types = MergedQueueType.entries.toTypedArray()
 
         val text = buildString {
-            appendLine("Тип очереди: *${group.settings!!.defaultMergedQueueType.ruTitle}*")
+            appendLine("Тип очереди: *${group.settings.defaultMergedQueueType.ruTitle}*")
             appendLine(Emoji.DIVIDER)
             appendLine("Выберите тип очереди предмета по умолчанию: ")
             types.forEachIndexed { i, type ->

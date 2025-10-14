@@ -76,7 +76,7 @@ class GroupListHandler (
         val text = groupListView.getGroupMenuText(group)
         val keyboard = groupListView.getGroupMenuKeyboard(false)
         val send = SendMessage.builder()
-            .toThread(group.settings!!.mainThreadId ?: threadId)
+            .toThread(group.settings.mainThreadId ?: threadId)
             .chatId(group.chatId)
             .markdown()
             .text(text)
