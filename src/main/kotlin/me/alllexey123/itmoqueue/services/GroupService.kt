@@ -18,14 +18,14 @@ class GroupService(
 
     @PostConstruct
     fun init() {
-        findAll().forEach { g -> {
+        findAll().forEach { g ->
             if (g.settings == null) {
                 val groupSettings = GroupSettings(group = g)
                 g.settings = groupSettings
                 groupSettingsRepository.save(groupSettings)
                 groupRepository.save(g)
             }
-        } }
+        }
     }
 
     fun findById(groupId: Long?): Group? {

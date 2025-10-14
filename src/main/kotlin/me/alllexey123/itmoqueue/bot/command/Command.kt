@@ -4,7 +4,6 @@ enum class Command(
     val raw: String,
     val escaped: String,
 ) {
-    NEW("/new", "/new"),
     LABS("/labs", "/labs"),
     SUBJECTS("/subjects", "/subjects"),
     NAME("/name", "/name"),
