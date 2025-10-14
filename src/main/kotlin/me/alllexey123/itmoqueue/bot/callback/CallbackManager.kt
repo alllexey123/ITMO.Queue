@@ -7,7 +7,7 @@ import me.alllexey123.itmoqueue.services.ContextService
 import me.alllexey123.itmoqueue.services.ManagedMessageService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
-import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery
 
 @Component
@@ -38,11 +38,11 @@ class CallbackManager(
 
             val managedMessage = managedMessageService.findById(callbackQuery.message.chatId, callbackQuery.message.messageId)
             if (managedMessage == null) {
-                val delete = DeleteMessage.builder()
-                    .chatId(callbackQuery.message.chatId)
-                    .messageId(callbackQuery.message.messageId)
+                val answer = AnswerCallbackQuery.builder()
+                    .callbackQueryId(callbackQuery.id)
+                    .text("Упс! Попробуй другое сообщение.")
                     .build()
-                telegram.execute(delete)
+                telegram.execute(answer)
                 return
             }
 
