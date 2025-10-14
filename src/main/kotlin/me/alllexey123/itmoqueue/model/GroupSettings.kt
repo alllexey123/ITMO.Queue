@@ -12,8 +12,8 @@ class GroupSettings(
     var id: Long? = null,
 
     @OneToOne
-    @JoinColumn(name = "group_id", nullable = false, unique = true)
-    var group: Group,
+    @JoinColumn(name = "group_id", unique = true)
+    var group: Group?,
 
     var attemptsEnabled: Boolean = false,
     var askAttemptsDirectly: Boolean = false,

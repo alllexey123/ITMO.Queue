@@ -1,5 +1,6 @@
 package me.alllexey123.itmoqueue.services
 
+import jakarta.annotation.PostConstruct
 import me.alllexey123.itmoqueue.model.Group
 import me.alllexey123.itmoqueue.model.GroupSettings
 import me.alllexey123.itmoqueue.repositories.GroupRepository
@@ -14,6 +15,17 @@ class GroupService(
     private val telegram: Telegram,
     private val groupSettingsRepository: GroupSettingsRepository
 ) {
+
+    @PostConstruct
+    fun init() {
+        groupRepository.findAll().forEach { g -> {
+            if (g.settings == null) {
+                val groupSettings = GroupSettings(group = g)
+                g.settings = groupSettings
+                groupSettingsRepository.save(groupSettings)
+            }
+        } }
+    }
 
     fun findById(groupId: Long?): Group? {
         if (groupId == null) return null
