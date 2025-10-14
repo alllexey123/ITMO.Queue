@@ -27,8 +27,8 @@ class ManagedMessageService(
                     .messageId(it.id.messageId)
                     .build()
                 telegram.execute(delete)
-            } catch (_: Exception) {
-
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
