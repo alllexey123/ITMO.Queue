@@ -21,12 +21,15 @@ class ManagedMessageService(
     @Transactional
     fun init() {
         repository.findAll().forEach {
-            val delete = DeleteMessage.builder()
-                .chatId(it.id.chatId)
-                .messageId(it.id.messageId)
-                .build()
-            telegram.execute(delete)
-            repository.delete(it)
+            try {
+                val delete = DeleteMessage.builder()
+                    .chatId(it.id.chatId)
+                    .messageId(it.id.messageId)
+                    .build()
+                telegram.execute(delete)
+            } catch (_: Exception) {
+
+            }
         }
     }
 
