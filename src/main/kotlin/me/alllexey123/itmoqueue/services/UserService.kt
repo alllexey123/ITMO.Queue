@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service
 @Service
 class UserService (private val userRepository: UserRepository) {
 
-    fun findById(userId: Long): User? {
+    fun findById(userId: Long?): User? {
+        if (userId == null) return null
         return userRepository.findByIdOrNull(userId)
     }
 

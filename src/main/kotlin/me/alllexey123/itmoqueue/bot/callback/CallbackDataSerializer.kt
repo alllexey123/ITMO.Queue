@@ -1,17 +1,14 @@
 package me.alllexey123.itmoqueue.bot.callback
 
-import org.springframework.stereotype.Component
+object CallbackDataSerializer {
 
-@Component
-class CallbackDataSerializer : ICallbackDataSerializer {
-
-    override fun serialize(data: CallbackData): String {
+    fun serialize(data: CallbackData): String {
         val parts = mutableListOf(data.handlerPrefix, data.actionPrefix)
         parts.addAll(data.toPayload())
         return parts.joinToString(":")
     }
 
-    override fun deserialize(rawData: String): CallbackData {
+    fun deserialize(rawData: String): CallbackData {
         val parts = rawData.split(":")
         val key = parts.take(2).joinToString(":")
         val payload = parts.drop(2)

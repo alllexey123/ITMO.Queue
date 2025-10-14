@@ -22,11 +22,7 @@ class UserSetNicknameCommand(
         telegram.execute(messageBuilder)
     }
 
-    override fun command() = NAME
+    override fun command() = Command.NAME
 
     override fun scope() = Scope.USER
-
-    companion object {
-        const val NAME = "set_name"
-    }
 }

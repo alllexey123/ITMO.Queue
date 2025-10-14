@@ -31,4 +31,10 @@ class QueueEntry (
     @CreatedDate
     @Column(nullable = false, updatable = false)
     var createdAt: Instant = Instant.now()
+
+    fun markDone() {
+        if (done) return
+        this.done = true
+        this.markedDoneAt = Instant.now()
+    }
 }

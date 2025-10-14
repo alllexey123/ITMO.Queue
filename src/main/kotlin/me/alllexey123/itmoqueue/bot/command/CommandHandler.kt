@@ -7,7 +7,7 @@ interface CommandHandler {
 
     fun handleMessage(context: MessageContext)
 
-    fun command(): String
+    fun command(): Command
 
     fun scope(): Scope
 }

@@ -1,5 +1,6 @@
 package me.alllexey123.itmoqueue.bot.callback
 
+import me.alllexey123.itmoqueue.bot.extensions.edit
 import me.alllexey123.itmoqueue.model.Group
 import me.alllexey123.itmoqueue.model.ManagedMessage
 import me.alllexey123.itmoqueue.model.Membership
@@ -9,6 +10,7 @@ import me.alllexey123.itmoqueue.services.Telegram
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery
 import org.telegram.telegrambots.meta.api.objects.chat.Chat
 import org.telegram.telegrambots.meta.api.objects.message.MaybeInaccessibleMessage
@@ -29,18 +31,22 @@ class CallbackContext(
     val id: String = query.id,
     val chatId: Long = chat.id,
     val messageId: Int = message.messageId,
-    val managedMessage: ManagedMessage? = null
+    val managedMessage: ManagedMessage
 ) {
-    fun send(): SendMessage.SendMessageBuilder<*, *> {
+    fun send(threadId: Int? = null): SendMessage.SendMessageBuilder<*, *> {
         return SendMessage.builder()
             .chatId(chatId)
             .let { it ->
-                message as Message
-                if (message.messageThreadId != null && message.isTopicMessage()) {
-                    it.messageThreadId(message.messageThreadId)
+                if (isTopicMessage()) {
+                    message as Message
+                    it.messageThreadId(threadId ?: message.messageThreadId)
                 }
                 it
             }
+    }
+
+    fun edit(): EditMessageText.EditMessageTextBuilder<*, *> {
+        return managedMessage.edit()
     }
 
     fun notEnoughPermissions(): AnswerCallbackQuery {
@@ -55,8 +61,8 @@ class CallbackContext(
         return AnswerCallbackQuery.builder().callbackQueryId(id)
     }
 
-    fun answer(text: String): AnswerCallbackQuery {
-        return answerBuilder().text(text).build()
+    fun answer(text: String) {
+        telegram.execute(answerBuilder().text(text).build())
     }
 
     fun isAdmin(): Boolean {
@@ -69,8 +75,20 @@ class CallbackContext(
         return false
     }
 
+    fun requireAdmin(membership: Membership?): Boolean {
+        if (membership == null) return false
+        if (membership.type == Membership.Type.ADMIN) return true
+        telegram.execute(notEnoughPermissions())
+        return false
+    }
+
     fun deleteMessage() {
         telegram.execute(deleteBuilder().build())
         managedMessageService.unregister(chatId, messageId)
+    }
+
+    fun isTopicMessage(): Boolean {
+        message as Message
+        return message.messageThreadId != null && message.isTopicMessage()
     }
 }

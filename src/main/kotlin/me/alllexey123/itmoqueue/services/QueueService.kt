@@ -46,7 +46,8 @@ class QueueService(
         )
     }
 
-    fun sortedEntries(lab: Lab): List<QueueEntry> {
+    fun sortedEntries(lab: Lab, forceIgnoreAttempts: Boolean = false): List<QueueEntry> {
+        if (forceIgnoreAttempts) return lab.queueEntries.sortedBy { it.createdAt }
         return when (lab.queueType) {
             QueueType.SIMPLE -> lab.queueEntries.sortedBy { it.createdAt }
             QueueType.FIRST_PRIORITY -> lab.queueEntries.sortedWith(compareBy<QueueEntry> {
@@ -70,7 +71,7 @@ class QueueService(
         }
     }
 
-    fun sortedEntries(subject: Subject): List<QueueEntry> {
+    fun sortedEntries(subject: Subject, forceIgnoreAttempts: Boolean = false): List<QueueEntry> {
         val labs = subject.labs.filter { it.queueEntries.isNotEmpty() }
         if (labs.isEmpty()) return emptyList()
 
@@ -80,7 +81,8 @@ class QueueService(
             }
 
             MergedQueueType.FIRST_PRIORITY -> {
-                labs.flatMap { it.queueEntries }
+                if (forceIgnoreAttempts) labs.flatMap { it.queueEntries }.sortedBy { it.createdAt }
+                else labs.flatMap { it.queueEntries }
                     .sortedWith(
                         compareBy<QueueEntry> {
                             if (it.attemptNumber == 1) 0 else 1
@@ -89,7 +91,7 @@ class QueueService(
             }
 
             MergedQueueType.BASIC_MERGE -> {
-                val perLab = labs.map { sortedEntries(it).toMutableList() }.toMutableList()
+                val perLab = labs.map { sortedEntries(it, forceIgnoreAttempts).toMutableList() }.toMutableList()
                 val result = mutableListOf<QueueEntry>()
                 var idx = 0
                 while (perLab.any { it.isNotEmpty() }) {
@@ -104,7 +106,7 @@ class QueueService(
             MergedQueueType.BALANCED_MERGE -> {
                 data class LabNode(val labIndex: Int, var next: Double, val weight: Double)
 
-                val perLab = labs.map { sortedEntries(it).toMutableList() }
+                val perLab = labs.map { sortedEntries(it, forceIgnoreAttempts).toMutableList() }
                 if (perLab.all { it.isEmpty() }) return emptyList()
 
                 val weights = perLab.map { max(1.0, it.size.toDouble()) }
@@ -129,8 +131,6 @@ class QueueService(
                 }
                 result
             }
-
-            else -> emptyList()
         }
     }
 

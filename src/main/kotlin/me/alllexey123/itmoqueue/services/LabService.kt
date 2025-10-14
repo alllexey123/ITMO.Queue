@@ -4,7 +4,6 @@ import me.alllexey123.itmoqueue.ItmoQueueProperties
 import me.alllexey123.itmoqueue.model.Group
 import me.alllexey123.itmoqueue.model.Lab
 import me.alllexey123.itmoqueue.model.Subject
-import me.alllexey123.itmoqueue.model.enums.QueueType
 import me.alllexey123.itmoqueue.repositories.LabRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -21,7 +20,6 @@ class LabService(private val labRepository: LabRepository, private val itmoQueue
             name = name,
             group = group,
             subject = subject,
-            queueType = QueueType.FIRST_PRIORITY,
             shortId = generateUniqueShortId()
         ))
         return lab

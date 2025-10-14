@@ -20,7 +20,7 @@ class CancelCommand(private val stateManager: StateManager,
         telegram.execute(sendMessage)
     }
 
-    override fun command() = "cancel"
+    override fun command() = Command.CANCEL
 
     override fun scope() = Scope.ANY
 }

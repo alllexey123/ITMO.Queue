@@ -4,8 +4,10 @@ import me.alllexey123.itmoqueue.bot.MessageContext
 import me.alllexey123.itmoqueue.bot.Scope
 import me.alllexey123.itmoqueue.bot.ValidationResult
 import me.alllexey123.itmoqueue.bot.Validators
-import me.alllexey123.itmoqueue.bot.command.GroupListLabsCommand
+import me.alllexey123.itmoqueue.bot.command.Command
+import me.alllexey123.itmoqueue.model.Membership
 import me.alllexey123.itmoqueue.services.LabService
+import me.alllexey123.itmoqueue.services.MembershipService
 import me.alllexey123.itmoqueue.services.Telegram
 import org.springframework.stereotype.Component
 
@@ -13,18 +15,21 @@ import org.springframework.stereotype.Component
 class EditLabNameState(
     private val telegram: Telegram,
     private val validators: Validators,
-    private val labService: LabService
+    private val labService: LabService,
+    private val membershipService: MembershipService
 ) : StateHandler() {
 
     override fun handle(context: MessageContext): Boolean {
-        if (!context.requireAdmin(telegram)) return false
         val labName = context.text.trim()
-        val group = context.group!!
-
         val labId = getChatData(context.chatId)?.getOrNull(0)?.toLong()
 
         val lab = labService.findById(labId)
         if (lab == null) return true
+
+        val group = lab.group
+        if (membershipService.findByGroupAndUser(group, context.user)?.type != Membership.Type.ADMIN) {
+            return context.isPrivate
+        }
 
         val check = validators.checkLabName(labName, group)
         val send = context.sendReply()
@@ -40,7 +45,7 @@ class EditLabNameState(
         send.text(
             """
             Название изменено с "$prev" на "$labName".
-            Список - /${GroupListLabsCommand.NAME}
+            Список - ${Command.LABS.escaped}
         """.trimIndent()
         )
 
