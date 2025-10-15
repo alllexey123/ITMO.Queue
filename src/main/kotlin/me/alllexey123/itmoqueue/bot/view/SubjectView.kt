@@ -9,7 +9,6 @@ import me.alllexey123.itmoqueue.model.Subject
 import me.alllexey123.itmoqueue.services.SubjectService
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Component
@@ -49,7 +48,7 @@ class SubjectView(private val subjectService: SubjectService) {
                 }
             }
             appendLine("——————————————")
-            appendLine("Обновлено: ${timeFormatter.format(LocalTime.now())}\n")
+            appendLine("Обновлено: ${timeFormatter.format(ViewUtils.timeAtStPetersburg())}\n")
             appendLine("[Ссылка](${subjectService.getSubjectUrl(subject)}) на полную очередь")
         }
     }

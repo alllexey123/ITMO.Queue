@@ -9,7 +9,6 @@ import me.alllexey123.itmoqueue.model.QueueEntry
 import me.alllexey123.itmoqueue.services.LabService
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Component
@@ -34,7 +33,7 @@ class LabView(private val labService: LabService) {
                 }
             }
             appendLine(Emoji.DIVIDER)
-            appendLine("Обновлено: ${timeFormatter.format(LocalTime.now())}")
+            appendLine("Обновлено: ${timeFormatter.format(ViewUtils.timeAtStPetersburg())}")
             appendLine("[Ссылка](${labService.getLabUrl(lab)}) на полную очередь")
         }
     }

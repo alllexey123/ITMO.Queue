@@ -5,8 +5,15 @@ import me.alllexey123.itmoqueue.bot.callback.CallbackData
 import me.alllexey123.itmoqueue.bot.extensions.inlineButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
+import java.time.LocalTime
+import java.time.ZoneId
 
 object ViewUtils {
+
+    val stPetersburgZoneId = ZoneId.of("Europe/Moscow")
+    fun timeAtStPetersburg(): LocalTime {
+        return LocalTime.now(stPetersburgZoneId)
+    }
 
     fun addPagination(
         rows: MutableList<InlineKeyboardRow>,
