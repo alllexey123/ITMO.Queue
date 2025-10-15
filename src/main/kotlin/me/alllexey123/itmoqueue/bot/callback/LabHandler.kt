@@ -86,7 +86,7 @@ class LabHandler(
 
     fun sendLabDetails(group: Group, lab: Lab, pinned: Boolean = false, threadId: Int? = null) {
         val activeEntries = queueService.sortedEntries(lab, !group.settings.attemptsEnabled).filter { !it.done }
-        val text = labView.getLabText(lab, activeEntries)
+        val text = labView.getLabText(lab, activeEntries, !group.settings.attemptsEnabled)
         val keyboard = labView.getLabKeyboard(
             hideSettings = pinned,
             hideNavigation = pinned
@@ -110,7 +110,7 @@ class LabHandler(
         val group = lab.group
         val realPinned = pinned ?: managedMessage.metadata.getBoolean(LAB_PINNED_KEY, false)
         val activeEntries = queueService.sortedEntries(lab, !group.settings.attemptsEnabled).filter { !it.done }
-        val text = labView.getLabText(lab, activeEntries)
+        val text = labView.getLabText(lab, activeEntries, !group.settings.attemptsEnabled)
         val keyboard = labView.getLabKeyboard(
             hideSettings = realPinned,
             hideNavigation = realPinned
