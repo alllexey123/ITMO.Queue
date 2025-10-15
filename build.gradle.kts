@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "me.alllexey123"
-version = "0.0.1"
+version = "1.0.0"
 description = "Service for ITMO laboratory work queues"
 
 java {
