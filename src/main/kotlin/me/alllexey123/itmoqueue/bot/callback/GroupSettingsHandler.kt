@@ -65,7 +65,7 @@ class GroupSettingsHandler(
             GroupSettingsView.SwitchSetting.ATTEMPTS_ENABLED -> group.settings.attemptsEnabled = newVal
             GroupSettingsView.SwitchSetting.ASK_ATTEMPTS_DIRECTLY -> group.settings.askAttemptsDirectly = newVal
         }
-        updateGroupSettings(group, context.managedMessage, context.isTopicMessage())
+        updateGroupSettings(group, context.managedMessage, context.isPrivate, context.isTopicMessage())
     }
 
     fun sendGroupSettings(group: Group, isTopic: Boolean) {
