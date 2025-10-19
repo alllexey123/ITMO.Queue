@@ -1,0 +1,20 @@
+package dev.alllexey.itmoqueue.model.enums
+
+enum class MessageType {
+    GROUP_LAB_LIST,
+    USER_LAB_LIST,
+    LAB_DETAILS,
+    LAB_ADD_TO_QUEUE,
+    LAB_DELETE_CONFIRM,
+    LAB_EDIT,
+    GROUP_SUBJECT_LIST,
+    SUBJECT_DETAILS,
+    SUBJECT_LAB_LIST,
+    SUBJECT_DELETE_CONFIRM,
+    SUBJECT_EDIT,
+    GROUP_SETTINGS,
+    NEW_MENU,
+    GROUP_LIST,
+    GROUP_MENU,
+    LAB_CREATED
+}

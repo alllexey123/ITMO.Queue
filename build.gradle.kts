@@ -6,7 +6,7 @@ plugins {
 	kotlin("plugin.jpa") version "1.9.25"
 }
 
-group = "me.alllexey123"
+group = "dev.alllexey"
 version = "1.0.0"
 description = "Service for ITMO laboratory work queues"
 
